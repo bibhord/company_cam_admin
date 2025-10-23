@@ -38,7 +38,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
     photo.status,
   ]);
 
-  const projectLabel = photo.projects?.name ?? 'Unassigned Project';
+  const projectLabel = photo.projectName ?? 'Unassigned Project';
   const tagList = tagsInput
     .split(',')
     .map((tag) => tag.trim())
