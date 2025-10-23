@@ -38,7 +38,17 @@ export function PhotoCard({ photo }: PhotoCardProps) {
     photo.status,
   ]);
 
-  const projectLabel = photo.projects?.name ?? 'Unassigned Project';
+  const projectLabel = useMemo(() => {
+    if (!photo.projects) {
+      return 'Unassigned Project';
+    }
+
+    if (Array.isArray(photo.projects)) {
+      return photo.projects[0]?.name ?? 'Unassigned Project';
+    }
+
+    return photo.projects.name ?? 'Unassigned Project';
+  }, [photo.projects]);
   const tagList = tagsInput
     .split(',')
     .map((tag) => tag.trim())
