@@ -1,6 +1,6 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface ProfileRecord {
   org_id: string;
@@ -63,13 +63,18 @@ const ensureAdminContext = async (photoId: string) => {
   return { supabase } as const;
 };
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const context = await ensureAdminContext(params.id);
-  if ('response' in context) {
-    return context.response;
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+
+  const adminContext = await ensureAdminContext(id);
+  if ('response' in adminContext) {
+    return adminContext.response;
   }
 
-  const supabase = context.supabase;
+  const supabase = adminContext.supabase;
 
   let payload: { tags?: unknown; notes?: unknown };
   try {
@@ -122,7 +127,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const { error: updateError } = await supabase
     .from('photos')
     .update(updates)
-    .eq('id', params.id);
+    .eq('id', id);
 
   if (updateError) {
     console.error('Failed to update photo metadata:', updateError);
@@ -132,18 +137,23 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   return NextResponse.json({ success: true });
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const context = await ensureAdminContext(params.id);
-  if ('response' in context) {
-    return context.response;
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+
+  const adminContext = await ensureAdminContext(id);
+  if ('response' in adminContext) {
+    return adminContext.response;
   }
 
-  const supabase = context.supabase;
+  const supabase = adminContext.supabase;
 
   const { error: deleteError } = await supabase
     .from('photos')
     .delete()
-    .eq('id', params.id);
+    .eq('id', id);
 
   if (deleteError) {
     console.error('Failed to delete photo:', deleteError);
