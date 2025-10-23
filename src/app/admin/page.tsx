@@ -9,6 +9,11 @@ interface ProfileRecord {
   is_admin: boolean;
 }
 
+interface ProjectRecord {
+  id: string;
+  name: string | null;
+}
+
 const formatStatus = (status: string) =>
   status
     .replace(/_/g, ' ')
@@ -66,8 +71,7 @@ export default async function AdminDashboard() {
         notes,
         tags,
         upload_status,
-        status,
-        projects ( name )
+        status
       `
     )
     .eq('org_id', profile.org_id)
@@ -82,7 +86,39 @@ export default async function AdminDashboard() {
     );
   }
 
-  const photoRecords = (photos ?? []) as PhotoRecord[];
+  const rawPhotos = (photos ?? []) as PhotoRecord[];
+
+  const projectIds = Array.from(
+    new Set(
+      rawPhotos
+        .map((photo) => photo.project_id)
+        .filter((projectId): projectId is string => Boolean(projectId))
+    )
+  );
+
+  let projectsById = new Map<string, string | null>();
+
+  if (projectIds.length > 0) {
+    const { data: projects, error: projectsError } = await supabase
+      .from('projects')
+      .select('id, name')
+      .in('id', projectIds)
+      .eq('org_id', profile.org_id);
+
+    if (projectsError) {
+      console.error('Error fetching projects for photos:', projectsError);
+    } else {
+      const projectRecords = (projects ?? []) as ProjectRecord[];
+      projectsById = new Map(
+        projectRecords.map((project) => [project.id, project.name ?? null] as [string, string | null])
+      );
+    }
+  }
+
+  const photoRecords = rawPhotos.map((photo) => ({
+    ...photo,
+    projectName: photo.project_id ? projectsById.get(photo.project_id) ?? null : null,
+  }));
   const statusSummary = photoRecords.reduce<Record<string, number>>((acc, photo) => {
     const statusKey = (photo.upload_status || photo.status || 'unknown').toLowerCase();
     acc[statusKey] = (acc[statusKey] || 0) + 1;

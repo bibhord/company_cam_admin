@@ -9,7 +9,5 @@ export interface PhotoRecord {
   tags: string[] | null;
   upload_status: string | null;
   status: string | null;
-  projects?: {
-    name: string | null;
-  } | null;
+  projectName?: string | null;
 }
