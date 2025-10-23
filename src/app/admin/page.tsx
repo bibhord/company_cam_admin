@@ -64,6 +64,7 @@ export default async function AdminDashboard() {
         project_id,
         object_key,
         notes,
+        tags,
         upload_status,
         status,
         projects ( name )
