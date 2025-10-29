@@ -75,14 +75,13 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
     .from('projects')
     .select('id, name, created_by, org_id, created_at')
     .eq('org_id', profile.org_id)
-    .eq('id', projectId)
-    .maybeSingle<ProjectRecord>();
+    .eq('id', projectId);
 
   if (!canEdit) {
     projectQuery = projectQuery.eq('created_by', user.id);
   }
 
-  const { data: project, error: projectError } = await projectQuery;
+  const { data: project, error: projectError } = await projectQuery.maybeSingle<ProjectRecord>();
 
   if (projectError) {
     console.error('Error loading project:', projectError);
