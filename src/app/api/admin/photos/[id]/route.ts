@@ -42,14 +42,13 @@ const ensureAdminContext = async (photoId: string) => {
   let photoQuery = supabase
     .from('photos')
     .select('org_id')
-    .eq('id', photoId)
-    .single<PhotoOrgRecord>();
+    .eq('id', photoId);
 
   if (!profile?.is_admin) {
     photoQuery = photoQuery.eq('created_by', user.id);
   }
 
-  const { data: photo, error: photoError } = await photoQuery;
+  const { data: photo, error: photoError } = await photoQuery.single<PhotoOrgRecord>();
 
   if (photoError || !photo) {
     if (photoError) {
