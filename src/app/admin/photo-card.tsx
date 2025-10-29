@@ -23,9 +23,10 @@ const formatStatus = (status: string) =>
 
 interface PhotoCardProps {
   photo: PhotoRecord;
+  canEdit: boolean;
 }
 
-export function PhotoCard({ photo }: PhotoCardProps) {
+export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const router = useRouter();
   const [tagsInput, setTagsInput] = useState(() => (photo.tags ? photo.tags.join(', ') : ''));
   const [notesInput, setNotesInput] = useState(() => photo.notes ?? '');
@@ -37,6 +38,8 @@ export function PhotoCard({ photo }: PhotoCardProps) {
     photo.upload_status,
     photo.status,
   ]);
+
+  const imageSrc = photo.signedUrl ?? photo.url ?? null;
 
   const projectLabel = useMemo(() => {
     if (!photo.projects) {
@@ -55,6 +58,9 @@ export function PhotoCard({ photo }: PhotoCardProps) {
     .filter(Boolean);
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
+    if (!canEdit) {
+      return;
+    }
     event.preventDefault();
     setErrorMessage(null);
     setIsSaving(true);
@@ -86,6 +92,9 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   };
 
   const handleDelete = async () => {
+    if (!canEdit) {
+      return;
+    }
     const shouldDelete = window.confirm('Are you sure you want to permanently delete this photo?');
     if (!shouldDelete) {
       return;
@@ -116,9 +125,9 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="relative h-48 w-full bg-gray-100">
-        {photo.url ? (
+        {imageSrc ? (
           <Image
-            src={photo.url}
+            src={imageSrc}
             alt={photo.name || 'Project photo'}
             fill
             sizes="(min-width: 1280px) 320px, (min-width: 640px) 50vw, 100vw"
@@ -136,6 +145,9 @@ export function PhotoCard({ photo }: PhotoCardProps) {
           <h3 className="text-lg font-semibold text-gray-900">{photo.name || 'Untitled Photo'}</h3>
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-indigo-600">{projectLabel}</p>
           <p className="mt-1 text-sm text-gray-500">Captured on {formatDate(photo.created_at)}</p>
+          {photo.created_by ? (
+            <p className="mt-1 text-sm text-gray-500">Captured by: {photo.created_by}</p>
+          ) : null}
           <p className="mt-1 text-sm text-gray-500">Object Key: {photo.object_key ?? 'Not available'}</p>
         </div>
 
@@ -161,55 +173,61 @@ export function PhotoCard({ photo }: PhotoCardProps) {
           )}
         </div>
 
-        <form onSubmit={handleSave} className="mt-auto flex flex-col gap-4">
-          <div>
-            <label htmlFor={`tags-${photo.id}`} className="block text-sm font-medium text-gray-700">
-              Edit Tags (comma separated)
-            </label>
-            <input
-              id={`tags-${photo.id}`}
-              type="text"
-              value={tagsInput}
-              onChange={(event) => setTagsInput(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              placeholder="roof, before, damage"
-            />
-          </div>
+        {canEdit ? (
+          <form onSubmit={handleSave} className="mt-auto flex flex-col gap-4">
+            <div>
+              <label htmlFor={`tags-${photo.id}`} className="block text-sm font-medium text-gray-700">
+                Edit Tags (comma separated)
+              </label>
+              <input
+                id={`tags-${photo.id}`}
+                type="text"
+                value={tagsInput}
+                onChange={(event) => setTagsInput(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="roof, before, damage"
+              />
+            </div>
 
-          <div>
-            <label htmlFor={`notes-${photo.id}`} className="block text-sm font-medium text-gray-700">
-              Admin Notes
-            </label>
-            <textarea
-              id={`notes-${photo.id}`}
-              value={notesInput}
-              onChange={(event) => setNotesInput(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              rows={3}
-              placeholder="Add context or follow-up instructions for your team"
-            />
-          </div>
+            <div>
+              <label htmlFor={`notes-${photo.id}`} className="block text-sm font-medium text-gray-700">
+                Admin Notes
+              </label>
+              <textarea
+                id={`notes-${photo.id}`}
+                value={notesInput}
+                onChange={(event) => setNotesInput(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                rows={3}
+                placeholder="Add context or follow-up instructions for your team"
+              />
+            </div>
 
-          {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
+            {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
-            >
-              {isSaving ? 'Saving…' : 'Save Changes'}
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="inline-flex items-center justify-center rounded-md border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
-            >
-              {isDeleting ? 'Deleting…' : 'Delete Photo'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              >
+                {isSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center justify-center rounded-md border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
+              >
+                {isDeleting ? 'Deleting…' : 'Delete Photo'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-auto rounded-md bg-gray-50 p-4 text-sm text-gray-600">
+            Photo details are read-only for standard users.
           </div>
-        </form>
+        )}
       </div>
     </article>
   );

@@ -16,18 +16,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  // Check if the user is an admin after a successful login
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
     .eq('user_id', user?.id)
-    .single();
+    .maybeSingle();
 
-  if (profileError || !profile?.is_admin) {
-    // If not an admin, sign them out and return an error
-    await supabase.auth.signOut();
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, isAdmin: profile?.is_admin ?? false });
 }

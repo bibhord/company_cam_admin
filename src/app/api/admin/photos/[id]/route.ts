@@ -39,15 +39,17 @@ const ensureAdminContext = async (photoId: string) => {
     return { response: NextResponse.json({ error: 'Failed to load admin profile.' }, { status: 500 }) } as const;
   }
 
-  if (!profile?.is_admin) {
-    return { response: NextResponse.json({ error: 'Forbidden.' }, { status: 403 }) } as const;
-  }
-
-  const { data: photo, error: photoError } = await supabase
+  let photoQuery = supabase
     .from('photos')
     .select('org_id')
     .eq('id', photoId)
     .single<PhotoOrgRecord>();
+
+  if (!profile?.is_admin) {
+    photoQuery = photoQuery.eq('created_by', user.id);
+  }
+
+  const { data: photo, error: photoError } = await photoQuery;
 
   if (photoError || !photo) {
     if (photoError) {
