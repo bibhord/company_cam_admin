@@ -33,8 +33,14 @@ export interface ProfileRow {
   user_id: string;
   first_name: string | null;
   last_name: string | null;
-  is_admin: boolean;
+  role: 'admin' | 'manager' | 'standard' | 'restricted';
+  is_admin?: boolean;
   is_active: boolean;
   org_id: string | null;
   created_at: string | null;
+}
+
+export interface UserMeta {
+  email: string | null;
+  lastSignInAt: string | null;
 }

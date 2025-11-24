@@ -4,13 +4,12 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { LogoutButton } from '../logout-button';
-import type { ProfileRow } from '../types';
-import { UserForm } from './user-form';
+import type { ProfileRow, UserMeta } from '../types';
+import { InviteUsersWizard } from './invite-users-wizard';
 
 interface ProfileRecord {
   org_id: string;
-  is_admin: boolean;
+  role: 'admin' | 'manager' | 'standard' | 'restricted';
 }
 
 export default async function ManageUsersPage() {
@@ -31,7 +30,7 @@ export default async function ManageUsersPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('org_id, is_admin')
+    .select('org_id, role')
     .eq('user_id', user.id)
     .single<ProfileRecord>();
 
@@ -44,7 +43,9 @@ export default async function ManageUsersPage() {
     );
   }
 
-  if (!profile || !profile.is_admin) {
+  const canManageUsers = profile?.role === 'admin' || profile?.role === 'manager';
+
+  if (!profile || !canManageUsers) {
     return (
       <div className="p-8 text-red-500">
         You do not have permission to manage organization users.
@@ -54,7 +55,7 @@ export default async function ManageUsersPage() {
 
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('user_id, first_name, last_name, is_admin, is_active, org_id, created_at')
+    .select('user_id, first_name, last_name, role, is_active, org_id, created_at')
     .eq('org_id', profile.org_id)
     .order('created_at', { ascending: false });
 
@@ -72,13 +73,7 @@ export default async function ManageUsersPage() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const userMeta = new Map<
-    string,
-    {
-      email: string | null;
-      lastSignInAt: string | null;
-    }
-  >();
+  const userMeta = new Map<string, UserMeta>();
 
   if (serviceRoleKey && supabaseUrl && profileRows.length > 0) {
     try {
@@ -119,25 +114,31 @@ export default async function ManageUsersPage() {
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">
-              <Link href="/admin" className="text-indigo-600 hover:text-indigo-700">
-                ← Back to dashboard
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              <Link href="/admin/projects" className="text-indigo-600 hover:text-indigo-700">
+                ← Back to projects
               </Link>
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-gray-900">Organization Users</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Invite new teammates and manage their access.
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">Users</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Invite teammates, assign workspace roles, and keep your organization up to date.
             </p>
           </div>
-          <LogoutButton />
         </header>
 
-        <UserForm />
+        <InviteUsersWizard />
 
         <section className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Current Members</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Current Members</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                View everyone in your organization and monitor access levels.
+              </p>
+            </div>
+          </div>
           {profileRows.length === 0 ? (
-            <p className="mt-3 text-sm text-gray-600">No users have been added to this organization yet.</p>
+            <p className="mt-3 text-sm text-slate-600">No users have been added to this organization yet.</p>
           ) : (
             <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -164,7 +165,6 @@ export default async function ManageUsersPage() {
                   {profileRows.map((row) => {
                     const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
                     const statusLabel = row.is_active ? 'Active' : 'Inactive';
-                    const roleLabel = row.is_admin ? 'Admin' : 'User';
                     const meta = userMeta.get(row.user_id);
                     const email = meta?.email ?? '—';
                     const lastSignIn = meta?.lastSignInAt
@@ -179,7 +179,7 @@ export default async function ManageUsersPage() {
                             <span className="text-xs text-gray-400">Last login: {lastSignIn}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{roleLabel}</td>
+                        <td className="px-4 py-3 text-gray-600 capitalize">{row.role}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
