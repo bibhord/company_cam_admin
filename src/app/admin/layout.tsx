@@ -77,6 +77,11 @@ export default async function AdminLayout({
     profile?.org_id ??
     'Organization';
 
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') ||
+    user.email ||
+    'Account';
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <div className="flex min-h-screen">
@@ -93,7 +98,7 @@ export default async function AdminLayout({
             </Link>
             <AccountMenu
               initials={initials || 'U'}
-              fullName={[profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user.email ?? 'Account'}
+              fullName={fullName}
               email={user.email ?? ''}
             />
           </div>
@@ -116,7 +121,7 @@ export default async function AdminLayout({
             </Link>
             <AccountMenu
               initials={initials || 'U'}
-              fullName={[profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user.email ?? 'Account'}
+              fullName={fullName}
               email={user.email ?? ''}
             />
           </div>
