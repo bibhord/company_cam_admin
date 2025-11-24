@@ -14,9 +14,9 @@ interface ReportRow {
   project_id: string;
   created_at: string;
   published_at: string | null;
-  projects?: {
+  projects?: Array<{
     name: string | null;
-  } | null;
+  }> | null;
 }
 
 const statusBadge = (status: ReportRow['status']) => {
@@ -136,7 +136,7 @@ export default async function ReportsPage() {
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">{report.title}</h2>
                   <p className="text-xs text-slate-500">
-                    {report.projects?.name ?? 'Unassigned Project'} • Created{' '}
+                    {report.projects?.[0]?.name ?? 'Unassigned Project'} • Created{' '}
                     {new Date(report.created_at).toLocaleDateString()}
                   </p>
                 </div>
