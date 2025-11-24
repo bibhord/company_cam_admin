@@ -13,9 +13,9 @@ interface ChecklistRow {
   project_id: string;
   created_at: string;
   created_by: string;
-  projects?: {
+  projects?: Array<{
     name: string | null;
-  } | null;
+  }> | null;
   checklist_items?: Array<{
     state: 'todo' | 'doing' | 'done' | 'n/a';
   }> | null;
@@ -77,7 +77,7 @@ export default async function ChecklistsPage() {
     return {
       id: row.id,
       name: row.name,
-      projectName: row.projects?.name ?? 'Untitled Project',
+      projectName: row.projects?.[0]?.name ?? 'Untitled Project',
       createdAt: row.created_at,
       createdBy: row.created_by,
       progress,
