@@ -15,12 +15,14 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+type LabelRow = {
+  id: string;
+  name: string | null;
+  color: string | null;
+};
+
 interface LabelAssignmentRow {
-  labels?: {
-    id: string;
-    name: string | null;
-    color: string | null;
-  } | null;
+  labels?: LabelRow[] | LabelRow | null;
 }
 
 interface ChecklistSummaryRow {
@@ -202,7 +204,10 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
 
   const labels = (labelAssignments ?? [])
     .map((row) => (row as LabelAssignmentRow).labels)
-    .filter((label): label is NonNullable<LabelAssignmentRow['labels']> => Boolean(label));
+    .flatMap((label) => {
+      if (!label) return [];
+      return Array.isArray(label) ? label : [label];
+    });
 
   const { data: checklistRows, error: checklistError } = await supabase
     .from('checklists')
@@ -229,9 +234,9 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
       total,
       done,
       progress,
-    isFinished,
-  };
-});
+      isFinished,
+    };
+  });
 
   const { data: reportRows, error: reportsError } = await supabase
     .from('reports')
