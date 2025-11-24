@@ -18,11 +18,11 @@ interface GroupRow {
 interface GroupMemberRow {
   group_id: string;
   user_id: string;
-  profiles?: {
+  profiles?: Array<{
     first_name: string | null;
     last_name: string | null;
     role: string | null;
-  } | null;
+  }> | null;
 }
 
 export default async function GroupsPage() {
@@ -165,7 +165,7 @@ export default async function GroupsPage() {
                     <li className="text-slate-500">No members yet.</li>
                   ) : (
                     members.map((member) => {
-                      const profile = member.profiles;
+                      const profile = member.profiles?.[0];
                       const fullName =
                         [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Unnamed user';
                       const role = profile?.role ?? 'standard';
