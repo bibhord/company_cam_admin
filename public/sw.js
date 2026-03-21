@@ -1,25 +1,24 @@
 // PhotoDoc Service Worker
 // -------------------------------------------------------
 // Network-first strategy with cache fallback for offline support.
-// Bump CACHE_VERSION to invalidate old caches after a deploy.
+// HTML pages are never cached to ensure fresh content on each load.
+// Only static assets (JS, CSS, images, icons) are cached for offline.
 // -------------------------------------------------------
 
-const CACHE_VERSION = 'photodoc-v1';
+const CACHE_VERSION = 'photodoc-v2';
 
-// App shell resources to pre-cache on install
+// Static assets to pre-cache on install
 const APP_SHELL = [
-  '/m',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
 
-// ---- Install: pre-cache the app shell ----
+// ---- Install: pre-cache static assets ----
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
   );
-  // Activate new SW immediately instead of waiting for old tabs to close
   self.skipWaiting();
 });
 
@@ -34,27 +33,40 @@ self.addEventListener('activate', (event) => {
       )
     )
   );
-  // Start controlling all open clients immediately
   self.clients.claim();
 });
 
-// ---- Fetch: network-first with cache fallback ----
+// ---- Fetch: network-first, only cache static assets ----
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
   // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Skip cross-origin requests (analytics, external APIs, etc.)
+  // Skip cross-origin requests
   if (!request.url.startsWith(self.location.origin)) return;
 
-  // Skip Supabase / API calls — they should not be cached
+  // Never cache API calls, auth, or version checks
   if (request.url.includes('/api/') || request.url.includes('/auth/')) return;
 
+  // Never cache HTML/navigation — always go to network for fresh content
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return new Response('Offline — please check your connection and try again.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' },
+        });
+      })
+    );
+    return;
+  }
+
+  // For static assets (JS, CSS, images): network-first with cache fallback
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
-        // Clone before caching because responses are single-use streams
         const clone = networkResponse.clone();
         caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
         return networkResponse;
@@ -62,14 +74,6 @@ self.addEventListener('fetch', (event) => {
       .catch(() =>
         caches.match(request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-
-          // For navigation requests that aren't cached, return the cached
-          // app shell so the SPA router can handle it.
-          if (request.mode === 'navigate') {
-            return caches.match('/m');
-          }
-
-          // Nothing we can do — let the browser show its default offline UI
           return new Response('Offline', {
             status: 503,
             statusText: 'Service Unavailable',
