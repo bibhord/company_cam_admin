@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   if (uploadError) {
     console.error('Error uploading file to storage:', uploadError);
-    return NextResponse.json({ error: 'Unable to upload file.' }, { status: 500 });
+    return NextResponse.json({ error: `Unable to upload file: ${uploadError.message}` }, { status: 500 });
   }
 
   const { data: photo, error: insertError } = await supabase
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   if (insertError) {
     console.error('Error inserting photo record:', insertError);
-    return NextResponse.json({ error: 'Unable to save photo record.' }, { status: 500 });
+    return NextResponse.json({ error: `Unable to save photo record: ${insertError.message}` }, { status: 500 });
   }
 
   return NextResponse.json(photo);
