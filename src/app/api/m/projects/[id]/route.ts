@@ -62,9 +62,37 @@ export async function GET(
     console.error('Error fetching photo count for project:', countError);
   }
 
+  // Fetch project photos with signed URLs
+  const { data: photos, error: photosError } = await supabase
+    .from('photos')
+    .select('id, name, object_key, notes, created_at')
+    .eq('project_id', id)
+    .eq('org_id', profile.org_id)
+    .order('created_at', { ascending: false });
+
+  if (photosError) {
+    console.error('Error fetching project photos:', photosError);
+  }
+
+  const photosWithUrls = await Promise.all(
+    (photos ?? []).map(async (photo) => {
+      const { data: signedUrlData } = await supabase.storage
+        .from('photos')
+        .createSignedUrl(photo.object_key, 3600);
+      return {
+        id: photo.id,
+        name: photo.name,
+        notes: photo.notes,
+        created_at: photo.created_at,
+        signed_url: signedUrlData?.signedUrl ?? null,
+      };
+    })
+  );
+
   return NextResponse.json({
     ...project,
     photo_count: count ?? 0,
+    photos: photosWithUrls,
   });
 }
 
