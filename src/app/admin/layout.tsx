@@ -5,6 +5,8 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SidebarNav } from './components/sidebar-nav';
 import { AccountMenu } from './components/account-menu';
 
+export const dynamic = 'force-dynamic';
+
 interface ProfileRecord {
   org_id: string | null;
   first_name: string | null;

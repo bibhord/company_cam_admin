@@ -45,7 +45,8 @@ export default async function MobileLayout({
     redirect('/login');
   }
 
-  const { data: profile } = await supabase
+  // Fetch profile for future use (org scoping, role checks)
+  await supabase
     .from('profiles')
     .select('org_id, first_name, last_name, role')
     .eq('user_id', user.id)
