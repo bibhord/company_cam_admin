@@ -44,7 +44,7 @@ export default async function MobileLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect('/m/login');
   }
 
   // Fetch profile for future use (org scoping, role checks)

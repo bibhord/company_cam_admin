@@ -12,7 +12,9 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.redirect(new URL('/login', req.url));
+    const isMobile = req.nextUrl.pathname.startsWith('/m');
+    const loginUrl = new URL(isMobile ? '/m/login' : '/login', req.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   // You can add a more advanced check for admin status here
@@ -22,5 +24,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/m/:path*'],
+  matcher: ['/admin/:path*', '/m/((?!login).*)'],
 };
