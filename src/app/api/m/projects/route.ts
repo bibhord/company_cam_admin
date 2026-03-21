@@ -1,6 +1,6 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface ProfileRecord {
   org_id: string;
@@ -87,4 +87,51 @@ export async function GET() {
   }));
 
   return NextResponse.json(projectsWithCounts);
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('org_id')
+    .eq('user_id', user.id)
+    .single<ProfileRecord>();
+
+  if (profileError || !profile) {
+    return NextResponse.json({ error: 'Unable to load profile.' }, { status: 500 });
+  }
+
+  const body = await request.json();
+  const name = (body.name || '').trim();
+
+  if (!name) {
+    return NextResponse.json({ error: 'Project name is required.' }, { status: 400 });
+  }
+
+  const { data: project, error: insertError } = await supabase
+    .from('projects')
+    .insert({
+      name,
+      org_id: profile.org_id,
+      created_by: user.id,
+    })
+    .select('id, name')
+    .single();
+
+  if (insertError) {
+    console.error('Error creating project:', insertError);
+    return NextResponse.json({ error: 'Unable to create project.' }, { status: 500 });
+  }
+
+  return NextResponse.json(project, { status: 201 });
 }
