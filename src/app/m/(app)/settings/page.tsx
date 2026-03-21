@@ -19,7 +19,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('/api/admin/profile');
+        const res = await fetch('/api/m/profile');
         if (res.ok) {
           const data = await res.json();
           setProfile(data);
@@ -36,7 +36,7 @@ export default function SettingsPage() {
     try {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
       if (res.ok) {
-        router.push('/login');
+        router.push('/m/login');
       }
     } catch (err) {
       console.error('Sign out failed:', err);
