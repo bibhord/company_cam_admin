@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       project_id: projectId || null,
       created_by: user.id,
       status: 'active',
-      upload_status: 'complete',
+      upload_status: 'uploaded',
     })
     .select()
     .single();
