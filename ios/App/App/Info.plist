@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>PhotoDoc needs camera access to capture job site photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PhotoDoc needs photo library access to upload job site photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PhotoDoc needs permission to save photos to your library.</string>
 </dict>
 </plist>

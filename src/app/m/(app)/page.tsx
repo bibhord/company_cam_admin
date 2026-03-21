@@ -283,7 +283,6 @@ export default function PhotosPage() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         onChange={handleFileSelected}
         className="hidden"
       />
