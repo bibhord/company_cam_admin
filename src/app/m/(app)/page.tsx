@@ -36,6 +36,7 @@ export default function PhotosPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Project assignment modal state
@@ -105,6 +106,7 @@ export default function PhotosPage() {
 
     setShowProjectModal(false);
     setUploading(true);
+    setUploadError(null);
 
     try {
       const formData = new FormData();
@@ -121,10 +123,12 @@ export default function PhotosPage() {
       if (res.ok) {
         await fetchPhotos();
       } else {
-        console.error('Upload failed');
+        const data = await res.json().catch(() => ({}));
+        const msg = data.error || `Upload failed (${res.status})`;
+        setUploadError(msg);
       }
     } catch (err) {
-      console.error('Upload error:', err);
+      setUploadError(`Upload error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
       setPendingFile(null);
@@ -195,6 +199,21 @@ export default function PhotosPage() {
           </button>
         </div>
       </div>
+
+      {/* Upload error */}
+      {uploadError && (
+        <div className="mx-4 mt-2 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 p-3">
+          <svg className="h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <p className="flex-1 text-sm text-red-600">{uploadError}</p>
+          <button onClick={() => setUploadError(null)} className="text-red-400">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 px-4 py-2">
