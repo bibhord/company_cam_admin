@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
 
   const file = formData.get('file') as File | null;
   const projectId = formData.get('projectId') as string | null;
+  const photoName = (formData.get('photoName') as string | null)?.trim() || null;
 
   if (!file) {
     return NextResponse.json({ error: 'File is required.' }, { status: 400 });
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     .insert({
       id: crypto.randomUUID(),
       object_key: objectKey,
-      name: file.name,
+      name: photoName || file.name,
       org_id: profile.org_id,
       project_id: projectId || null,
       created_by: user.id,

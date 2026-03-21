@@ -48,6 +48,7 @@ export default function PhotosPage() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [creatingProject, setCreatingProject] = useState(false);
+  const [photoName, setPhotoName] = useState('');
 
   async function fetchPhotos() {
     setLoading(true);
@@ -89,6 +90,7 @@ export default function PhotosPage() {
 
     // Store the file and show the project picker
     setPendingFile(file);
+    setPhotoName(file.name.replace(/\.[^.]+$/, ''));
     setShowProjectModal(true);
     setProjectSearch('');
     setShowNewProject(false);
@@ -113,6 +115,10 @@ export default function PhotosPage() {
       formData.append('file', pendingFile);
       if (projectId) {
         formData.append('projectId', projectId);
+      }
+      const trimmedName = photoName.trim();
+      if (trimmedName) {
+        formData.append('photoName', trimmedName);
       }
 
       const res = await fetch('/api/m/upload', {
@@ -327,6 +333,19 @@ export default function PhotosPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+
+            {/* Photo name */}
+            <div className="px-4 pt-3">
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">Photo Name</label>
+              <input
+                type="text"
+                placeholder="Name this photo..."
+                value={photoName}
+                onChange={(e) => setPhotoName(e.target.value)}
+                autoFocus
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
             </div>
 
             {/* Search */}
