@@ -9,7 +9,6 @@ import type { PhotoRecord } from './types';
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString(undefined, {
-    year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -33,6 +32,7 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const statusLabel = useMemo(() => formatStatus(photo.upload_status || photo.status || 'unknown'), [
     photo.upload_status,
@@ -42,25 +42,18 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const imageSrc = photo.signedUrl ?? photo.url ?? null;
 
   const projectLabel = useMemo(() => {
-    if (!photo.projects) {
-      return 'Unassigned Project';
-    }
-
-    if (Array.isArray(photo.projects)) {
-      return photo.projects[0]?.name ?? 'Unassigned Project';
-    }
-
-    return photo.projects.name ?? 'Unassigned Project';
+    if (!photo.projects) return 'Unassigned';
+    if (Array.isArray(photo.projects)) return photo.projects[0]?.name ?? 'Unassigned';
+    return photo.projects.name ?? 'Unassigned';
   }, [photo.projects]);
+
   const tagList = tagsInput
     .split(',')
     .map((tag) => tag.trim())
     .filter(Boolean);
 
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
-    if (!canEdit) {
-      return;
-    }
+    if (!canEdit) return;
     event.preventDefault();
     setErrorMessage(null);
     setIsSaving(true);
@@ -68,13 +61,8 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
     try {
       const response = await fetch(`/api/admin/photos/${photo.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tags: tagsInput,
-          notes: notesInput,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags: tagsInput, notes: notesInput }),
       });
 
       if (!response.ok) {
@@ -82,9 +70,9 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
         throw new Error(payload?.error || 'Unable to save photo updates.');
       }
 
+      setIsEditing(false);
       router.refresh();
     } catch (error) {
-      console.error('Error updating photo metadata:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Unexpected error updating photo.');
     } finally {
       setIsSaving(false);
@@ -92,30 +80,21 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   };
 
   const handleDelete = async () => {
-    if (!canEdit) {
-      return;
-    }
+    if (!canEdit) return;
     const shouldDelete = window.confirm('Are you sure you want to permanently delete this photo?');
-    if (!shouldDelete) {
-      return;
-    }
+    if (!shouldDelete) return;
 
     setErrorMessage(null);
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`/api/admin/photos/${photo.id}`, {
-        method: 'DELETE',
-      });
-
+      const response = await fetch(`/api/admin/photos/${photo.id}`, { method: 'DELETE' });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         throw new Error(payload?.error || 'Unable to delete photo.');
       }
-
       router.refresh();
     } catch (error) {
-      console.error('Error deleting photo:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Unexpected error deleting photo.');
     } finally {
       setIsDeleting(false);
@@ -123,8 +102,9 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   };
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="relative h-48 w-full bg-gray-100">
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:shadow-sm">
+      {/* Image */}
+      <div className="relative h-44 w-full bg-slate-100">
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -134,100 +114,110 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-gray-500">
-            No preview available
+          <div className="flex h-full items-center justify-center">
+            <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+            </svg>
           </div>
         )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-4 p-5">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{photo.name || 'Untitled Photo'}</h3>
-          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-indigo-600">{projectLabel}</p>
-          <p className="mt-1 text-sm text-gray-500">Captured on {formatDate(photo.created_at)}</p>
-          {photo.created_by ? (
-            <p className="mt-1 text-sm text-gray-500">Captured by: {photo.created_by}</p>
-          ) : null}
-          <p className="mt-1 text-sm text-gray-500">Object Key: {photo.object_key ?? 'Not available'}</p>
-        </div>
-
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-            <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+        {/* Status badge */}
+        <div className="absolute top-2 right-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-600 backdrop-blur-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
             {statusLabel}
           </span>
         </div>
+      </div>
 
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700">Tags</h4>
-          {tagList.length > 0 ? (
-            <ul className="mt-1 flex flex-wrap gap-2">
-              {tagList.map((tag) => (
-                <li key={tag} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-1 text-sm text-gray-500">No tags have been added yet.</p>
-          )}
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="text-sm font-semibold text-slate-900 truncate">{photo.name || 'Untitled Photo'}</h3>
+        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+          <span>{projectLabel}</span>
+          <span className="text-slate-300">&middot;</span>
+          <span>{formatDate(photo.created_at)}</span>
         </div>
 
-        {canEdit ? (
-          <form onSubmit={handleSave} className="mt-auto flex flex-col gap-4">
+        {/* Tags */}
+        {tagList.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1">
+            {tagList.map((tag) => (
+              <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Edit form */}
+        {canEdit && isEditing ? (
+          <form onSubmit={handleSave} className="mt-3 flex flex-col gap-3">
             <div>
-              <label htmlFor={`tags-${photo.id}`} className="block text-sm font-medium text-gray-700">
-                Edit Tags (comma separated)
+              <label htmlFor={`tags-${photo.id}`} className="block text-xs font-medium text-slate-600 mb-1">
+                Tags (comma separated)
               </label>
               <input
                 id={`tags-${photo.id}`}
                 type="text"
                 value={tagsInput}
-                onChange={(event) => setTagsInput(event.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                onChange={(e) => setTagsInput(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
                 placeholder="roof, before, damage"
               />
             </div>
 
             <div>
-              <label htmlFor={`notes-${photo.id}`} className="block text-sm font-medium text-gray-700">
-                Admin Notes
+              <label htmlFor={`notes-${photo.id}`} className="block text-xs font-medium text-slate-600 mb-1">
+                Notes
               </label>
               <textarea
                 id={`notes-${photo.id}`}
                 value={notesInput}
-                onChange={(event) => setNotesInput(event.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                rows={3}
-                placeholder="Add context or follow-up instructions for your team"
+                onChange={(e) => setNotesInput(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                rows={2}
+                placeholder="Add context for your team"
               />
             </div>
 
-            {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
+            {errorMessage && (
+              <p className="text-xs text-red-500">{errorMessage}</p>
+            )}
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="submit"
                 disabled={isSaving}
-                className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+                className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
               >
-                {isSaving ? 'Saving…' : 'Save Changes'}
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="inline-flex items-center justify-center rounded-md border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
+                className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-50 disabled:opacity-50"
               >
-                {isDeleting ? 'Deleting…' : 'Delete Photo'}
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </form>
-        ) : (
-          <div className="mt-auto rounded-md bg-gray-50 p-4 text-sm text-gray-600">
-            Photo details are read-only for standard users.
-          </div>
-        )}
+        ) : canEdit ? (
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="mt-auto pt-3 text-xs font-medium text-amber-600 hover:text-amber-700 transition text-left cursor-pointer"
+          >
+            Edit details
+          </button>
+        ) : null}
       </div>
     </article>
   );

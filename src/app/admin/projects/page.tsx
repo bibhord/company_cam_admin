@@ -9,15 +9,8 @@ interface ProfileRecord {
   role: string;
 }
 
-const formatStatus = (status: string) =>
-  status
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-
 const formatProjectDate = (value: string | null) => {
-  if (!value) {
-    return 'Unknown date';
-  }
+  if (!value) return 'Unknown date';
   return new Date(value).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -45,10 +38,10 @@ export default async function ProjectsPage() {
   if (profileError || !profile) {
     console.error('Error loading profile:', profileError);
     return (
-      <div className="p-10">
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-red-600">Unable to load profile</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <div className="p-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+          <h1 className="text-lg font-semibold text-red-700">Unable to load profile</h1>
+          <p className="mt-1 text-sm text-red-600">
             Please verify row-level security policies and try again.
           </p>
         </div>
@@ -63,11 +56,7 @@ export default async function ProjectsPage() {
     .select('id, name, created_by, org_id, created_at')
     .eq('org_id', profile.org_id);
 
-    console.log(" before can managexxxxxxx");
-    console.log(canManageOrg);
-    console.log(profile);
   if (!canManageOrg) {
-    console.log(" cannot manage");
     projectsQuery = projectsQuery.eq('created_by', user.id);
   }
 
@@ -76,10 +65,10 @@ export default async function ProjectsPage() {
   if (projectsError) {
     console.error('Error loading projects:', projectsError);
     return (
-      <div className="p-10">
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-red-600">Unable to load projects</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <div className="p-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+          <h1 className="text-lg font-semibold text-red-700">Unable to load projects</h1>
+          <p className="mt-1 text-sm text-red-600">
             Confirm that your Supabase policies allow reading projects for this organization.
           </p>
         </div>
@@ -89,22 +78,11 @@ export default async function ProjectsPage() {
 
   let photosQuery = supabase
     .from('photos')
-    .select(
-      `
-        id,
-        name,
-        url,
-        created_at,
-        project_id,
-        object_key,
-        notes,
-        tags,
-        upload_status,
-        status,
-        created_by,
-        projects ( name )
-      `
-    )
+    .select(`
+      id, name, url, created_at, project_id, object_key,
+      notes, tags, upload_status, status, created_by,
+      projects ( name )
+    `)
     .eq('org_id', profile.org_id);
 
   if (!canManageOrg) {
@@ -116,10 +94,10 @@ export default async function ProjectsPage() {
   if (photosError) {
     console.error('Error fetching photos:', photosError);
     return (
-      <div className="p-10">
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-red-600">Unable to load photos</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <div className="p-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+          <h1 className="text-lg font-semibold text-red-700">Unable to load photos</h1>
+          <p className="mt-1 text-sm text-red-600">
             Confirm that your Supabase policies allow reading photos for this organization.
           </p>
         </div>
@@ -132,32 +110,17 @@ export default async function ProjectsPage() {
   const storage = supabase.storage.from('photos');
   const photoRecords = await Promise.all(
     rawPhotoRecords.map(async (photo) => {
-      if (!photo.object_key) {
-        return { ...photo, signedUrl: null };
-      }
-
+      if (!photo.object_key) return { ...photo, signedUrl: null };
       try {
         const { data: signed, error: signedError } = await storage.createSignedUrl(photo.object_key, 60 * 60);
-        if (signedError) {
-          console.error(`Error generating signed URL for photo ${photo.id}:`, signedError);
-          return { ...photo, signedUrl: null };
-        }
+        if (signedError) return { ...photo, signedUrl: null };
         return { ...photo, signedUrl: signed?.signedUrl ?? null };
-      } catch (error) {
-        console.error(`Unexpected error generating signed URL for photo ${photo.id}:`, error);
+      } catch {
         return { ...photo, signedUrl: null };
       }
     })
   );
-  const statusSummary = photoRecords.reduce<Record<string, number>>((acc, photo) => {
-    const statusKey = (photo.upload_status || photo.status || 'unknown').toLowerCase();
-    acc[statusKey] = (acc[statusKey] || 0) + 1;
-    return acc;
-  }, {});
-  const managedProjectIds = new Set(projectRecords.map((project) => project.id));
-  const latestPhotoRecords = canManageOrg
-    ? photoRecords
-    : photoRecords.filter((photo) => (photo.project_id ? managedProjectIds.has(photo.project_id) : false));
+
   const photoCountByProject = photoRecords.reduce<Record<string, number>>((acc, photo) => {
     if (!photo.project_id) {
       acc.__unassigned = (acc.__unassigned || 0) + 1;
@@ -167,27 +130,37 @@ export default async function ProjectsPage() {
     return acc;
   }, {});
 
+  const managedProjectIds = new Set(projectRecords.map((p) => p.id));
+  const latestPhotoRecords = canManageOrg
+    ? photoRecords
+    : photoRecords.filter((p) => (p.project_id ? managedProjectIds.has(p.project_id) : false));
+
+  const unassignedCount = photoCountByProject.__unassigned ?? 0;
+
   return (
-    <div className="px-6 py-10">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+    <div className="px-6 py-8 lg:px-10">
+      {/* Header */}
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Track active projects, monitor uploads, and jump into project workspaces.
+          <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {projectRecords.length} project{projectRecords.length !== 1 ? 's' : ''} &middot; {photoRecords.length} photo{photoRecords.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Link
             href="/admin/projects/new"
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600"
           >
-            <span className="text-lg">+</span>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
             New Project
           </Link>
           {canManageOrg ? (
             <Link
               href="/admin/users"
-              className="inline-flex items-center gap-2 rounded-md border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Manage Users
             </Link>
@@ -195,79 +168,94 @@ export default async function ProjectsPage() {
         </div>
       </div>
 
-      <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Projects in your workspace</h2>
-          {projectRecords.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-600">
-              {canManageOrg
-                ? 'No projects have been created for this organization yet.'
-                : 'You have not created any projects yet.'}
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {projectRecords.map((project) => (
-                <li key={project.id}>
-                  <Link
-                    href={`/admin/projects/${project.id}`}
-                    className="block rounded-lg border border-slate-200 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-base font-semibold text-slate-900">{project.name ?? 'Untitled Project'}</h3>
-                        <p className="text-xs text-slate-500">
-                          Created on {formatProjectDate(project.created_at)} •{' '}
-                          {photoCountByProject[project.id] ?? 0} photos
-                        </p>
-                      </div>
-                      <span className="text-xs font-medium uppercase tracking-wide text-indigo-600">Open</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      {/* Stats cards */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-sm font-medium text-slate-500">Total Projects</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{projectRecords.length}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-sm font-medium text-slate-500">Total Photos</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{photoRecords.length}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-sm font-medium text-slate-500">Unassigned Photos</p>
+          <p className={`mt-1 text-2xl font-bold ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+            {unassignedCount}
+          </p>
+          {unassignedCount > 0 && (
+            <p className="mt-1 text-xs text-slate-400">Photos not linked to any project</p>
           )}
         </div>
+      </div>
 
-        <div className="space-y-6">
-          <div className="rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Upload status</h2>
-            {photoRecords.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-600">No photos have been uploaded yet.</p>
-            ) : (
-              <dl className="mt-3 space-y-3">
-                {Object.entries(statusSummary).map(([status, count]) => (
-                  <div key={status} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
-                    <dt className="text-sm font-medium text-slate-600">{formatStatus(status)}</dt>
-                    <dd className="text-sm font-semibold text-slate-900">{count}</dd>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
-                  <dt className="text-sm font-medium text-slate-600">Total photos</dt>
-                  <dd className="text-sm font-semibold text-slate-900">{photoRecords.length}</dd>
-                </div>
-              </dl>
+      {/* Projects list */}
+      <section className="mb-10">
+        <h2 className="mb-4 text-base font-semibold text-slate-900">All Projects</h2>
+        {projectRecords.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+            </svg>
+            <p className="mt-3 text-sm font-medium text-slate-600">No projects yet</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {canManageOrg ? 'Create your first project to start documenting job sites.' : 'No projects have been assigned to you yet.'}
+            </p>
+            {canManageOrg && (
+              <Link href="/admin/projects/new" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600">
+                Create Project
+              </Link>
             )}
           </div>
-
-          <div className="rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Unassigned photos</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Photos captured without a project selection. Assign them to keep your workspace organized.
-            </p>
-            <p className="mt-4 text-2xl font-semibold text-slate-900">
-              {photoCountByProject.__unassigned ?? 0}
-            </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {projectRecords.map((project) => {
+              const count = photoCountByProject[project.id] ?? 0;
+              return (
+                <Link
+                  key={project.id}
+                  href={`/admin/projects/${project.id}`}
+                  className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-amber-300 hover:shadow-sm"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-amber-700 transition-colors truncate">
+                        {project.name ?? 'Untitled Project'}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Created {formatProjectDate(project.created_at)}
+                      </p>
+                    </div>
+                    <svg className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-amber-500 transition-colors mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                    </svg>
+                    <span className="text-xs text-slate-500">{count} photo{count !== 1 ? 's' : ''}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </div>
+        )}
       </section>
 
-      <section className="mt-10 rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Latest uploads</h2>
-            {latestPhotoRecords.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-600">Once your team uploads photos they will appear here.</p>
+      {/* Latest uploads */}
+      <section>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">Latest Uploads</h2>
+        {latestPhotoRecords.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+            </svg>
+            <p className="mt-3 text-sm font-medium text-slate-600">No photos yet</p>
+            <p className="mt-1 text-xs text-slate-400">Once your team uploads photos they will appear here.</p>
+          </div>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {latestPhotoRecords.slice(0, 6).map((photo) => (
               <PhotoCard key={photo.id} photo={photo} canEdit={canManageOrg} />
             ))}
