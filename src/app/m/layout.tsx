@@ -12,6 +12,8 @@ interface ProfileRecord {
   role: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'PhotoDoc Mobile',
   description: 'Capture and organize job site photos on the go.',
