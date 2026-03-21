@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
   const { data: photo, error: insertError } = await supabase
     .from('photos')
     .insert({
+      id: crypto.randomUUID(),
       object_key: objectKey,
       name: file.name,
       org_id: profile.org_id,
