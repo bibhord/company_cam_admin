@@ -12,16 +12,26 @@ interface ProjectPhoto {
   created_at: string;
 }
 
+type ProjectStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed';
+
 interface Project {
   id: string;
   name: string;
   street_address: string | null;
   city: string | null;
   state_zip: string | null;
+  status: ProjectStatus;
   photo_count: number;
   updated_at: string;
   photos: ProjectPhoto[];
 }
+
+const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: string }> = {
+  not_started: { label: 'Not Started', color: 'text-slate-600', bg: 'bg-slate-100' },
+  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50' },
+  blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-50' },
+  completed: { label: 'Completed', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+};
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -48,6 +58,7 @@ export default function ProjectDetailPage() {
 
   // Details form
   const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<ProjectStatus>('not_started');
   const [streetAddress, setStreetAddress] = useState('');
   const [city, setCity] = useState('');
   const [stateZip, setStateZip] = useState('');
@@ -69,6 +80,7 @@ export default function ProjectDetailPage() {
       if (res.ok) {
         const data: Project = await res.json();
         setProject(data);
+        setStatus(data.status ?? 'not_started');
         setStreetAddress(data.street_address ?? '');
         setCity(data.city ?? '');
         setStateZip(data.state_zip ?? '');
@@ -91,6 +103,7 @@ export default function ProjectDetailPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          status,
           street_address: streetAddress,
           city,
           state_zip: stateZip,
@@ -223,7 +236,12 @@ export default function ProjectDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
             </svg>
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_CONFIG[project.status ?? 'not_started'].bg} ${STATUS_CONFIG[project.status ?? 'not_started'].color}`}>
+                {STATUS_CONFIG[project.status ?? 'not_started'].label}
+              </span>
+            </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span>{project.photo_count} photo{project.photo_count !== 1 ? 's' : ''}</span>
               <span>&middot;</span>
@@ -329,6 +347,25 @@ export default function ProjectDetailPage() {
         {tab === 'details' && (
           <div className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Project Status
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.entries(STATUS_CONFIG) as [ProjectStatus, typeof STATUS_CONFIG[ProjectStatus]][]).map(([value, config]) => (
+                <button
+                  key={value}
+                  onClick={() => setStatus(value)}
+                  className={`rounded-xl border-2 py-2.5 text-sm font-medium transition-colors ${
+                    status === value
+                      ? `${config.bg} ${config.color} border-current`
+                      : 'border-slate-200 text-slate-500 bg-white'
+                  }`}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 pt-2">
               Project Address
             </h3>
 

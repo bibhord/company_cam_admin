@@ -43,7 +43,7 @@ export async function GET(
 
   const { data: project, error: projectError } = await supabase
     .from('projects')
-    .select('id, name, street_address, city, state_zip, created_at, updated_at')
+    .select('id, name, street_address, city, state_zip, status, created_at, updated_at')
     .eq('id', id)
     .eq('org_id', profile.org_id)
     .single();
@@ -132,7 +132,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden. Admin or manager role required.' }, { status: 403 });
   }
 
-  let body: { name?: string; street_address?: string; city?: string; state_zip?: string };
+  let body: { name?: string; street_address?: string; city?: string; state_zip?: string; status?: string };
   try {
     body = await request.json();
   } catch {
@@ -147,13 +147,15 @@ export async function PUT(
   if (body.street_address !== undefined) updates.street_address = body.street_address.trim();
   if (body.city !== undefined) updates.city = body.city.trim();
   if (body.state_zip !== undefined) updates.state_zip = body.state_zip.trim();
+  const validStatuses = ['not_started', 'in_progress', 'blocked', 'completed'];
+  if (body.status !== undefined && validStatuses.includes(body.status)) updates.status = body.status;
 
   const { data: updated, error: updateError } = await supabase
     .from('projects')
     .update(updates)
     .eq('id', id)
     .eq('org_id', profile.org_id)
-    .select('id, name, street_address, city, state_zip, created_at, updated_at')
+    .select('id, name, street_address, city, state_zip, status, created_at, updated_at')
     .single();
 
   if (updateError) {

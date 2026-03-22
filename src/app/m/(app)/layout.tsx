@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from 'next';
 import { BottomNav } from './components/bottom-nav';
 import { ServiceWorkerRegister } from './components/service-worker-register';
 import { VersionCheck } from './components/version-check';
+import { NotificationPrompt } from './components/notification-prompt';
 
 interface ProfileRecord {
   org_id: string | null;
@@ -58,6 +59,7 @@ export default async function MobileLayout({
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <VersionCheck />
+      <NotificationPrompt />
       <ServiceWorkerRegister />
       <main className="flex-1 pb-16">
         {children}

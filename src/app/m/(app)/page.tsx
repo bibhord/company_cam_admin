@@ -49,6 +49,7 @@ export default function PhotosPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [creatingProject, setCreatingProject] = useState(false);
   const [photoName, setPhotoName] = useState('');
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   async function fetchPhotos() {
     setLoading(true);
@@ -251,7 +252,11 @@ export default function PhotosPage() {
         ) : view === 'list' ? (
           <div className="space-y-2">
             {photos.map((photo) => (
-              <div key={photo.id} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
+              <button
+                key={photo.id}
+                onClick={() => setSelectedPhoto(photo)}
+                className="flex w-full items-center gap-3 rounded-xl bg-white p-3 shadow-sm text-left"
+              >
                 {photo.signed_url ? (
                   <img src={photo.signed_url} alt={photo.name} className="h-14 w-14 rounded-lg object-cover" />
                 ) : (
@@ -268,13 +273,17 @@ export default function PhotosPage() {
                   )}
                   <p className="text-xs text-slate-400">{timeAgo(photo.created_at)}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {photos.map((photo) => (
-              <div key={photo.id} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100">
+              <button
+                key={photo.id}
+                onClick={() => setSelectedPhoto(photo)}
+                className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
+              >
                 {photo.signed_url ? (
                   <img src={photo.signed_url} alt={photo.name} className="h-full w-full object-cover" />
                 ) : (
@@ -284,7 +293,10 @@ export default function PhotosPage() {
                     </svg>
                   </div>
                 )}
-              </div>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
+                  <p className="truncate text-xs font-medium text-white">{photo.name}</p>
+                </div>
+              </button>
             ))}
           </div>
         )}
@@ -317,6 +329,68 @@ export default function PhotosPage() {
         onChange={handleFileSelected}
         className="hidden"
       />
+
+      {/* Photo Detail Modal */}
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => setSelectedPhoto(null)}>
+          <div
+            className="w-full max-w-lg rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Photo preview */}
+            {selectedPhoto.signed_url && (
+              <div className="relative h-64 w-full overflow-hidden rounded-t-2xl bg-slate-100">
+                <img src={selectedPhoto.signed_url} alt={selectedPhoto.name} className="h-full w-full object-cover" />
+                <button
+                  onClick={() => setSelectedPhoto(null)}
+                  className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-sm"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div className="p-4 space-y-3">
+              <h3 className="text-base font-semibold text-slate-900">{selectedPhoto.name}</h3>
+
+              <div className="space-y-2">
+                {selectedPhoto.project_name && (
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                    </svg>
+                    <span className="text-sm text-slate-700">{selectedPhoto.project_name}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                  </svg>
+                  <span className="text-sm text-slate-700">
+                    {new Date(selectedPhoto.created_at).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Project Assignment Modal */}
       {showProjectModal && (
