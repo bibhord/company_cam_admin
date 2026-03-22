@@ -49,7 +49,7 @@ export default function LoginPage() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-          queryParams: { prompt: 'select_account' },
+          queryParams: { prompt: 'select_account', access_type: 'offline' },
         },
       });
       if (error) {

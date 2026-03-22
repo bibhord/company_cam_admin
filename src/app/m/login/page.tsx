@@ -90,7 +90,7 @@ export default function MobileLoginPage() {
         options: {
           redirectTo: redirectUrl,
           skipBrowserRedirect: true,
-          queryParams: { prompt: 'select_account' },
+          queryParams: { prompt: 'select_account', access_type: 'offline' },
         },
       });
       if (error) {
