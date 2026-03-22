@@ -1,0 +1,140 @@
+{
+  "common": {
+    "nav": {
+      "photos": "Fotos",
+      "projects": "Proyectos",
+      "settings": "Ajustes"
+    },
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "delete": "Eliminar",
+      "create": "Crear",
+      "upload": "Subir",
+      "signOut": "Cerrar sesión",
+      "loading": "Cargando",
+      "search": "Buscar"
+    },
+    "time": {
+      "justNow": "Justo ahora",
+      "minutesAgo": "hace {{count}}m",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d",
+      "monthsAgo": "hace {{count}} mes(es)"
+    },
+    "errors": {
+      "generic": "Algo salió mal",
+      "unauthorized": "No autorizado",
+      "notFound": "No encontrado"
+    }
+  },
+  "login": {
+    "title": "Inicia sesión para continuar",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión...",
+    "continueWithGoogle": "Continuar con Google",
+    "or": "o",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "onboarding": {
+    "welcome": "Bienvenido a CaptureWork",
+    "tellUs": "Cuéntanos sobre tu trabajo",
+    "whatSpecialty": "¿Cuál es tu especialidad?",
+    "selectLanguage": "Selecciona tu idioma",
+    "specialties": {
+      "generalContractor": "Contratista General",
+      "plumber": "Plomero",
+      "electrician": "Electricista",
+      "hvacTechnician": "Técnico en HVAC",
+      "roofer": "Techador",
+      "painter": "Pintor",
+      "landscaper": "Jardinero / Paisajista",
+      "carpenter": "Carpintero",
+      "mason": "Albañil",
+      "other": "Otro"
+    },
+    "continue": "Continuar",
+    "skip": "Omitir"
+  },
+  "photos": {
+    "captureYourWork": "Captura tu trabajo",
+    "noPhotosYet": "Aún no hay fotos",
+    "emptyPrompt": "Toca el botón de cámara para capturar tu primera foto de obra",
+    "viewList": "Lista",
+    "viewGrid": "Cuadrícula",
+    "assignToProject": "Asignar a proyecto",
+    "photoName": "Nombre de la foto",
+    "photoNamePlaceholder": "Nombra esta foto...",
+    "searchProjects": "Buscar proyectos...",
+    "skipNoProject": "Omitir — Sin proyecto",
+    "uploadWithoutAssigning": "Subir sin asignar",
+    "createNewProject": "Crear nuevo proyecto",
+    "newProjectName": "Nombre del nuevo proyecto",
+    "detail": {
+      "noProject": "Sin proyecto",
+      "change": "Cambiar",
+      "close": "Cerrar"
+    }
+  },
+  "projects": {
+    "title": "Proyectos",
+    "searchPlaceholder": "Buscar proyectos...",
+    "noProjectsFound": "No se encontraron proyectos",
+    "tryDifferentSearch": "Intenta con otro término de búsqueda",
+    "noProjectsCreated": "Aún no se ha creado ningún proyecto",
+    "mapViewComingSoon": "Vista de mapa próximamente",
+    "mapViewDescription": "Visualiza tus proyectos en un mapa",
+    "sortAZ": "A-Z",
+    "sortStatus": "Estado",
+    "status": {
+      "notStarted": "No iniciado",
+      "inProgress": "En progreso",
+      "blocked": "Bloqueado",
+      "completed": "Completado"
+    },
+    "detail": {
+      "photosTab": "Fotos",
+      "detailsTab": "Detalles",
+      "noPhotosYet": "Aún no hay fotos",
+      "addPhotosPrompt": "Agrega fotos a este proyecto",
+      "addPhotoToProject": "Agregar foto al proyecto",
+      "uploading": "Subiendo...",
+      "projectStatus": "Estado del proyecto",
+      "projectAddress": "Dirección del proyecto",
+      "streetAddress": "Dirección",
+      "city": "Ciudad",
+      "stateZip": "Estado / Código postal",
+      "saveChanges": "Guardar cambios",
+      "saving": "Guardando...",
+      "photoName": "Nombre de la foto",
+      "notes": "Notas",
+      "notesPlaceholder": "Agrega notas sobre esta foto...",
+      "save": "Guardar",
+      "delete": "Eliminar",
+      "deleteConfirm": "¿Eliminar esta foto? Esta acción no se puede deshacer."
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "myPhotos": "Mis fotos",
+    "notificationSettings": "Configuración de notificaciones",
+    "companySettings": "Configuración de la empresa",
+    "signOut": "Cerrar sesión",
+    "signingOut": "Cerrando sesión...",
+    "language": "Idioma",
+    "specialty": "Especialidad"
+  },
+  "notifications": {
+    "enableTitle": "Activar notificaciones",
+    "enableDescription": "Recibe avisos sobre actualizaciones de proyectos, nuevas fotos y asignaciones de tareas.",
+    "allow": "Permitir",
+    "notNow": "Ahora no"
+  },
+  "versionCheck": {
+    "newVersionAvailable": "Nueva versión disponible",
+    "updateNow": "Actualizar ahora"
+  }
+}

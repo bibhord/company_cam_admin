@@ -1,0 +1,140 @@
+{
+  "common": {
+    "nav": {
+      "photos": "Photos",
+      "projects": "Projects",
+      "settings": "Settings"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "delete": "Delete",
+      "create": "Create",
+      "upload": "Upload",
+      "signOut": "Sign Out",
+      "loading": "Loading",
+      "search": "Search"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "monthsAgo": "{{count}}mo ago"
+    },
+    "errors": {
+      "generic": "Something went wrong",
+      "unauthorized": "Unauthorized",
+      "notFound": "Not found"
+    }
+  },
+  "login": {
+    "title": "Sign in to continue",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "forgotPassword": "Forgot password?"
+  },
+  "onboarding": {
+    "welcome": "Welcome to CaptureWork",
+    "tellUs": "Tell us about your work",
+    "whatSpecialty": "What is your specialty?",
+    "selectLanguage": "Select your language",
+    "specialties": {
+      "generalContractor": "General Contractor",
+      "plumber": "Plumber",
+      "electrician": "Electrician",
+      "hvacTechnician": "HVAC Technician",
+      "roofer": "Roofer",
+      "painter": "Painter",
+      "landscaper": "Landscaper",
+      "carpenter": "Carpenter",
+      "mason": "Mason",
+      "other": "Other"
+    },
+    "continue": "Continue",
+    "skip": "Skip"
+  },
+  "photos": {
+    "captureYourWork": "Capture Your Work",
+    "noPhotosYet": "No Photos Yet",
+    "emptyPrompt": "Tap the camera button to capture your first job site photo",
+    "viewList": "List",
+    "viewGrid": "Grid",
+    "assignToProject": "Assign to Project",
+    "photoName": "Photo Name",
+    "photoNamePlaceholder": "Name this photo...",
+    "searchProjects": "Search projects...",
+    "skipNoProject": "Skip — No project",
+    "uploadWithoutAssigning": "Upload without assigning",
+    "createNewProject": "Create New Project",
+    "newProjectName": "New project name",
+    "detail": {
+      "noProject": "No project",
+      "change": "Change",
+      "close": "Close"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "searchPlaceholder": "Search projects...",
+    "noProjectsFound": "No Projects Found",
+    "tryDifferentSearch": "Try a different search term",
+    "noProjectsCreated": "No projects have been created yet",
+    "mapViewComingSoon": "Map view coming soon",
+    "mapViewDescription": "View your projects on a map",
+    "sortAZ": "A-Z",
+    "sortStatus": "Status",
+    "status": {
+      "notStarted": "Not Started",
+      "inProgress": "In Progress",
+      "blocked": "Blocked",
+      "completed": "Completed"
+    },
+    "detail": {
+      "photosTab": "Photos",
+      "detailsTab": "Details",
+      "noPhotosYet": "No photos yet",
+      "addPhotosPrompt": "Add photos to this project",
+      "addPhotoToProject": "Add Photo to Project",
+      "uploading": "Uploading...",
+      "projectStatus": "Project Status",
+      "projectAddress": "Project Address",
+      "streetAddress": "Street Address",
+      "city": "City",
+      "stateZip": "State / ZIP Code",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "photoName": "Photo Name",
+      "notes": "Notes",
+      "notesPlaceholder": "Add notes about this photo...",
+      "save": "Save",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this photo? This cannot be undone."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "myPhotos": "My Photos",
+    "notificationSettings": "Notification Settings",
+    "companySettings": "Company Settings",
+    "signOut": "Sign Out",
+    "signingOut": "Signing Out...",
+    "language": "Language",
+    "specialty": "Specialty"
+  },
+  "notifications": {
+    "enableTitle": "Enable Notifications",
+    "enableDescription": "Get notified about project updates, new photos, and task assignments.",
+    "allow": "Allow",
+    "notNow": "Not Now"
+  },
+  "versionCheck": {
+    "newVersionAvailable": "New version available",
+    "updateNow": "Update Now"
+  }
+}

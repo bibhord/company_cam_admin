@@ -9,12 +9,33 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string;
+  language: string;
+  specialty: string | null;
 }
+
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+];
+
+const SPECIALTIES = [
+  { value: 'general_contractor', label: 'General Contractor' },
+  { value: 'plumber', label: 'Plumber' },
+  { value: 'electrician', label: 'Electrician' },
+  { value: 'hvac', label: 'HVAC Technician' },
+  { value: 'roofer', label: 'Roofer' },
+  { value: 'painter', label: 'Painter' },
+  { value: 'landscaper', label: 'Landscaper' },
+  { value: 'carpenter', label: 'Carpenter' },
+  { value: 'mason', label: 'Mason' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [savingPref, setSavingPref] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -30,6 +51,28 @@ export default function SettingsPage() {
     }
     fetchProfile();
   }, []);
+
+  async function updatePreference(key: string, value: string) {
+    setSavingPref(true);
+    try {
+      const res = await fetch('/api/m/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (res.ok && profile) {
+        setProfile({ ...profile, [key]: value });
+        // If language changed, reload to apply new locale
+        if (key === 'language') {
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update preference:', err);
+    } finally {
+      setSavingPref(false);
+    }
+  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -55,6 +98,9 @@ export default function SettingsPage() {
   const fullName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email
     : '';
+
+  const currentLang = LANGUAGES.find((l) => l.code === profile?.language) ?? LANGUAGES[0];
+  const currentSpecialty = SPECIALTIES.find((s) => s.value === profile?.specialty);
 
   const menuItems = [
     {
@@ -103,6 +149,56 @@ export default function SettingsPage() {
             <p className="truncate text-xs text-slate-500">
               {profile?.email ?? ''}
             </p>
+          </div>
+        </div>
+
+        {/* Language selector */}
+        <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+          <div className="px-4 pt-3 pb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Language</p>
+          </div>
+          {LANGUAGES.map((lang, idx) => (
+            <button
+              key={lang.code}
+              onClick={() => updatePreference('language', lang.code)}
+              disabled={savingPref}
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-slate-50 ${
+                idx < LANGUAGES.length - 1 ? 'border-b border-slate-100' : ''
+              }`}
+            >
+              <span className="text-lg">{lang.flag}</span>
+              <span className="flex-1 text-sm text-slate-900">{lang.label}</span>
+              {profile?.language === lang.code && (
+                <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Specialty selector */}
+        <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+          <div className="px-4 pt-3 pb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Specialty</p>
+          </div>
+          <div className="px-4 py-2">
+            <select
+              value={profile?.specialty ?? ''}
+              onChange={(e) => updatePreference('specialty', e.target.value)}
+              disabled={savingPref}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            >
+              <option value="">Select your specialty</option>
+              {SPECIALTIES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            {currentSpecialty && (
+              <p className="mt-1.5 text-xs text-slate-500">
+                Current: {currentSpecialty.label}
+              </p>
+            )}
           </div>
         </div>
 

@@ -6,12 +6,15 @@ import { BottomNav } from './components/bottom-nav';
 import { ServiceWorkerRegister } from './components/service-worker-register';
 import { VersionCheck } from './components/version-check';
 import { NotificationPrompt } from './components/notification-prompt';
+import { LocaleWrapper } from './components/locale-wrapper';
 
 interface ProfileRecord {
   org_id: string | null;
   first_name: string | null;
   last_name: string | null;
   role: string;
+  language: string | null;
+  onboarding_complete: boolean | null;
 }
 
 export const dynamic = 'force-dynamic';
@@ -49,14 +52,22 @@ export default async function MobileLayout({
     redirect('/m/login');
   }
 
-  // Fetch profile for future use (org scoping, role checks)
-  await supabase
+  // Fetch profile for locale and onboarding check
+  const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, first_name, last_name, role')
+    .select('org_id, first_name, last_name, role, language, onboarding_complete')
     .eq('user_id', user.id)
     .maybeSingle<ProfileRecord>();
 
+  // Redirect to onboarding if not complete
+  if (!profile?.onboarding_complete) {
+    redirect('/m/onboarding');
+  }
+
+  const locale = (profile?.language === 'es' ? 'es' : 'en') as 'en' | 'es';
+
   return (
+    <LocaleWrapper locale={locale}>
     <div className="flex min-h-screen flex-col bg-slate-50">
       <VersionCheck />
       <NotificationPrompt />
@@ -77,5 +88,6 @@ export default async function MobileLayout({
         }}
       />
     </div>
+    </LocaleWrapper>
   );
 }
