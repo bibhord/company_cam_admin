@@ -13,7 +13,8 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error('OAuth callback error:', error);
-      return NextResponse.redirect(new URL('/m/login', requestUrl.origin));
+      const loginUrl = next.startsWith('/admin') ? '/login' : '/m/login';
+      return NextResponse.redirect(new URL(loginUrl, requestUrl.origin));
     }
 
     // Ensure profile exists for OAuth users
@@ -42,14 +43,16 @@ export async function GET(request: Request) {
             ? `${displayName}'s (${userEmail}) Organization`
             : `${displayName}'s Organization`;
 
-          const { data: org } = await serviceClient
+          const { data: org, error: orgError } = await serviceClient
             .from('organizations')
             .insert({ name: orgName })
             .select('id')
             .single();
 
-          if (org) {
-            await serviceClient.from('profiles').insert({
+          if (orgError) {
+            console.error('OAuth callback: failed to create organization:', orgError);
+          } else if (org) {
+            const { error: profileError } = await serviceClient.from('profiles').insert({
               user_id: user.id,
               org_id: org.id,
               first_name: user.user_metadata?.full_name?.split(' ')[0] ?? null,
@@ -59,8 +62,14 @@ export async function GET(request: Request) {
               is_active: true,
               onboarding_complete: false,
             });
+
+            if (profileError) {
+              console.error('OAuth callback: failed to create profile:', profileError);
+            }
           }
         }
+      } else {
+        console.error('OAuth callback: missing SUPABASE_SERVICE_ROLE_KEY');
       }
     }
   }

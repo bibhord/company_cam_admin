@@ -12,6 +12,7 @@ interface ProfileRecord {
   first_name: string | null;
   last_name: string | null;
   role: string;
+  onboarding_complete: boolean | null;
   organizations?: {
     name: string | null;
   } | null;
@@ -62,9 +63,14 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, first_name, last_name, role, organizations ( name )')
+    .select('org_id, first_name, last_name, role, onboarding_complete, organizations ( name )')
     .eq('user_id', user.id)
     .maybeSingle<ProfileRecord>();
+
+  // Redirect to onboarding if profile missing or not complete
+  if (!profile || !profile.onboarding_complete) {
+    redirect('/onboarding');
+  }
 
   const initials = profile
     ? [profile.first_name?.[0], profile.last_name?.[0]]
