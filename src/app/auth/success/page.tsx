@@ -1,30 +1,62 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function AuthSuccessPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const [checking, setChecking] = useState(true);
 
-  // If opened inside the PWA (standalone mode), redirect to /m directly
   useEffect(() => {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    async function handleRedirect() {
+      // Wait briefly for cookies/localStorage to settle
+      await new Promise((r) => setTimeout(r, 500));
 
-    if (isStandalone) {
-      router.replace('/m');
-      return;
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        // Try refreshing the session from storage
+        const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+        if (!refreshed) {
+          setChecking(false);
+          return;
+        }
+      }
+
+      // Detect context and redirect
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (navigator as unknown as { standalone?: boolean }).standalone === true;
+      const isDesktop = window.innerWidth >= 1024;
+
+      if (isStandalone) {
+        router.replace('/m');
+      } else if (isDesktop) {
+        router.replace('/admin');
+      } else {
+        // Mobile Safari — show "return to app" message
+        setChecking(false);
+      }
     }
 
-    // In regular browser on desktop, just redirect
-    const isDesktop = window.innerWidth >= 1024;
-    if (isDesktop) {
-      router.replace('/admin');
-    }
-  }, [router]);
+    handleRedirect();
+  }, [supabase, router]);
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <svg className="mx-auto h-8 w-8 animate-spin text-amber-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="mt-3 text-sm text-slate-500">Signing you in...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
