@@ -108,15 +108,34 @@ export default function MobileSignupPage() {
           const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
             await Browser.close();
             urlListener.remove();
-            const urlObj = new URL(url);
+
+            // Handle both PKCE flow (?code=) and implicit flow (#access_token=)
+            const urlWithQuery = url.replace('#', '?');
+            const urlObj = new URL(urlWithQuery);
+
             const code = urlObj.searchParams.get('code');
+            const accessToken = urlObj.searchParams.get('access_token');
+            const refreshToken = urlObj.searchParams.get('refresh_token');
+
+            let authenticated = false;
             if (code) {
-              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-              if (!exchangeError) {
-                router.replace('/m');
-                return;
-              }
-              console.error('Code exchange error:', exchangeError);
+              const { error: err } = await supabase.auth.exchangeCodeForSession(code);
+              if (!err) authenticated = true;
+              else console.error('Code exchange error:', err);
+            } else if (accessToken && refreshToken) {
+              const { error: err } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (!err) authenticated = true;
+              else console.error('Set session error:', err);
+            }
+
+            if (authenticated) {
+              // Ensure profile/org exists for OAuth users
+              try { await fetch('/api/auth/ensure-profile', { method: 'POST' }); } catch {}
+              router.replace('/m');
+              return;
             }
             setGoogleLoading(false);
           });
