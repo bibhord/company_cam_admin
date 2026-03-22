@@ -1,6 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface LogoutButtonProps {
   variant?: 'primary' | 'ghost';
@@ -9,10 +10,12 @@ interface LogoutButtonProps {
 
 export function LogoutButton({ variant = 'primary', className = '' }: LogoutButtonProps) {
   const [pending, startTransition] = useTransition();
+  const supabase = createClientComponentClient();
 
   const handleLogout = () => {
     startTransition(async () => {
       await fetch('/api/auth/logout', { method: 'POST' });
+      await supabase.auth.signOut();
       window.location.href = '/login';
     });
   };

@@ -103,17 +103,14 @@ export default function MobileLoginPage() {
           const { Browser } = await import('@capacitor/browser');
           const { App } = await import('@capacitor/app');
 
-          // Remove any stale listeners from previous attempts
-          await App.removeAllListeners();
-          await Browser.removeAllListeners();
+          // Track whether this attempt has been handled
+          let handled = false;
 
-          // Track whether appUrlOpen already handled auth
-          let handledByUrlOpen = false;
-
-          // Listen for the custom URL scheme redirect
           const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
-            handledByUrlOpen = true;
-            await Browser.close();
+            if (handled) return;
+            handled = true;
+
+            try { await Browser.close(); } catch {}
             urlListener.remove();
 
             // Handle both PKCE flow (?code=) and implicit flow (#access_token=)
@@ -128,18 +125,19 @@ export default function MobileLoginPage() {
             if (code) {
               const { error: err } = await supabase.auth.exchangeCodeForSession(code);
               if (!err) authenticated = true;
-              else console.error('Code exchange error:', err);
+              else setError(`Auth error: ${err.message}`);
             } else if (accessToken && refreshToken) {
               const { error: err } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken,
               });
               if (!err) authenticated = true;
-              else console.error('Set session error:', err);
+              else setError(`Session error: ${err.message}`);
+            } else {
+              setError(`OAuth returned no code or token. URL: ${url.substring(0, 100)}`);
             }
 
             if (authenticated) {
-              // Ensure profile/org exists for OAuth users
               try { await fetch('/api/auth/ensure-profile', { method: 'POST' }); } catch {}
               router.replace('/m');
               return;
@@ -147,11 +145,12 @@ export default function MobileLoginPage() {
             setGoogleLoading(false);
           });
 
-          // Fallback: check session when browser is closed manually (user dismissed it)
-          await Browser.addListener('browserFinished', async () => {
-            // Wait briefly — appUrlOpen may fire right after browserFinished
-            await new Promise(r => setTimeout(r, 1000));
-            if (handledByUrlOpen) return;
+          // Fallback: if user dismisses the browser manually
+          const browserListener = await Browser.addListener('browserFinished', async () => {
+            await new Promise(r => setTimeout(r, 1500));
+            if (handled) return;
+            handled = true;
+            browserListener.remove();
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               router.replace('/m');

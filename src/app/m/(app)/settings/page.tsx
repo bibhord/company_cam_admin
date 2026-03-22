@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { MobileHeader } from '../components/mobile-header';
 
 interface UserProfile {
@@ -33,6 +34,7 @@ const SPECIALTIES = [
 
 export default function SettingsPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [savingPref, setSavingPref] = useState(false);
@@ -77,13 +79,13 @@ export default function SettingsPage() {
   async function handleSignOut() {
     setSigningOut(true);
     try {
-      const res = await fetch('/api/auth/logout', { method: 'POST' });
-      if (res.ok) {
-        router.push('/m/login');
-      }
+      // Sign out on both server (clear cookies) and client (clear localStorage)
+      await fetch('/api/auth/logout', { method: 'POST' });
+      await supabase.auth.signOut();
+      // Hard redirect to fully reset app state (flushes WKWebView memory)
+      window.location.href = '/m/login';
     } catch (err) {
       console.error('Sign out failed:', err);
-    } finally {
       setSigningOut(false);
     }
   }
