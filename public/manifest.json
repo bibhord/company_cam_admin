@@ -3,6 +3,7 @@
   "short_name": "PhotoDoc",
   "description": "Job site photo documentation for contractors",
   "start_url": "/m",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",
   "theme_color": "#F59E0B",

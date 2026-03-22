@@ -81,15 +81,18 @@ export default function MobileSignupPage() {
     setGoogleLoading(true);
     setError('');
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/m`,
+          skipBrowserRedirect: true,
         },
       });
       if (error) {
         setError(error.message);
         setGoogleLoading(false);
+      } else if (data?.url) {
+        window.location.assign(data.url);
       }
     } catch {
       setError('Something went wrong. Please try again.');
