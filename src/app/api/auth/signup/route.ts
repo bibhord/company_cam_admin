@@ -43,9 +43,12 @@ export async function POST(req: Request) {
 
       // Create a personal organization for the new user
       const displayName = [first_name, last_name].filter(Boolean).join(' ') || email;
+      const orgName = displayName !== email
+        ? `${displayName}'s (${email}) Organization`
+        : `${email}'s Organization`;
       const { data: org, error: orgError } = await serviceClient
         .from('organizations')
-        .insert({ name: `${displayName}'s Organization` })
+        .insert({ name: orgName })
         .select('id')
         .single();
 

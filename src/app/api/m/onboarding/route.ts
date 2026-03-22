@@ -61,9 +61,13 @@ export async function POST(request: NextRequest) {
   } else {
     // Create org + profile for Google OAuth users who don't have one yet
     const displayName = user.user_metadata?.full_name || user.email || 'User';
+    const userEmail = user.email || '';
+    const orgName = displayName !== userEmail && userEmail
+      ? `${displayName}'s (${userEmail}) Organization`
+      : `${displayName}'s Organization`;
     const { data: org, error: orgError } = await serviceClient
       .from('organizations')
-      .insert({ name: `${displayName}'s Organization` })
+      .insert({ name: orgName })
       .select('id')
       .single();
 
