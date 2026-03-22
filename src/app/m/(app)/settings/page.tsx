@@ -79,10 +79,11 @@ export default function SettingsPage() {
   async function handleSignOut() {
     setSigningOut(true);
     try {
-      // Sign out on both server (clear cookies) and client (clear localStorage)
       await fetch('/api/auth/logout', { method: 'POST' });
       await supabase.auth.signOut();
-      // Hard redirect to fully reset app state (flushes WKWebView memory)
+      // Nuclear clear to prevent stale session conflicts on next login
+      localStorage.clear();
+      // Hard redirect to fully reset WKWebView state
       window.location.href = '/m/login';
     } catch (err) {
       console.error('Sign out failed:', err);

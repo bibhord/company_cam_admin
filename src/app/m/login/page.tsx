@@ -80,9 +80,10 @@ export default function MobileLoginPage() {
       const isCapacitor = typeof window !== 'undefined' &&
         !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 
-      // For Capacitor, redirect to custom URL scheme so iOS hands control back to the app
+      // For Capacitor, use HTTPS bridge page that redirects to custom URL scheme.
+      // Direct custom-scheme redirects from Supabase are unreliable on iOS.
       const redirectUrl = isCapacitor
-        ? 'com.captureyourwork.app://auth/callback'
+        ? `${window.location.origin}/m/auth-callback`
         : `${window.location.origin}/auth/callback?next=/m`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({

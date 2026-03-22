@@ -84,8 +84,9 @@ export default function MobileSignupPage() {
       const isCapacitor = typeof window !== 'undefined' &&
         !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 
+      // For Capacitor, use HTTPS bridge page that redirects to custom URL scheme.
       const redirectUrl = isCapacitor
-        ? 'com.captureyourwork.app://auth/callback'
+        ? `${window.location.origin}/m/auth-callback`
         : `${window.location.origin}/auth/callback?next=/m`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
