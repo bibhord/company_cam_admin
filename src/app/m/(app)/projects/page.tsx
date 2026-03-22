@@ -4,15 +4,27 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MobileHeader } from '../components/mobile-header';
 
+type ProjectStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed';
+
 interface Project {
   id: string;
   name: string;
   street_address: string | null;
   city: string | null;
   state_zip: string | null;
+  status: ProjectStatus;
   photo_count: number;
   updated_at: string;
 }
+
+const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: string; order: number }> = {
+  blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-50', order: 0 },
+  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50', order: 1 },
+  not_started: { label: 'Not Started', color: 'text-slate-600', bg: 'bg-slate-100', order: 2 },
+  completed: { label: 'Completed', color: 'text-emerald-600', bg: 'bg-emerald-50', order: 3 },
+};
+
+type SortKey = 'name' | 'status';
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -33,6 +45,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<SortKey>('name');
   const [view, setView] = useState<'list' | 'map'>('list');
 
   useEffect(() => {
@@ -52,16 +65,26 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
-  const filtered = projects.filter((p) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      (p.street_address && p.street_address.toLowerCase().includes(q)) ||
-      (p.city && p.city.toLowerCase().includes(q)) ||
-      (p.state_zip && p.state_zip.toLowerCase().includes(q))
-    );
-  });
+  const filtered = projects
+    .filter((p) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.street_address && p.street_address.toLowerCase().includes(q)) ||
+        (p.city && p.city.toLowerCase().includes(q)) ||
+        (p.state_zip && p.state_zip.toLowerCase().includes(q))
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'status') {
+        const aOrder = STATUS_CONFIG[a.status ?? 'not_started'].order;
+        const bOrder = STATUS_CONFIG[b.status ?? 'not_started'].order;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return a.name.localeCompare(b.name);
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   return (
     <div className="flex flex-col">
@@ -92,28 +115,56 @@ export default function ProjectsPage() {
           />
         </div>
 
-        {/* View toggle */}
-        <div className="flex rounded-full bg-slate-200 p-0.5">
-          <button
-            onClick={() => setView('list')}
-            className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
-              view === 'list'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-slate-600'
-            }`}
-          >
-            List
-          </button>
-          <button
-            onClick={() => setView('map')}
-            className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
-              view === 'map'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-slate-600'
-            }`}
-          >
-            Map
-          </button>
+        {/* Sort + View controls */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 rounded-full bg-slate-200 p-0.5">
+            <button
+              onClick={() => setSortBy('name')}
+              className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
+                sortBy === 'name'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-slate-600'
+              }`}
+            >
+              A-Z
+            </button>
+            <button
+              onClick={() => setSortBy('status')}
+              className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
+                sortBy === 'status'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-slate-600'
+              }`}
+            >
+              Status
+            </button>
+          </div>
+          <div className="flex rounded-full bg-slate-200 p-0.5">
+            <button
+              onClick={() => setView('list')}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                view === 'list'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-slate-600'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setView('map')}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                view === 'map'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-slate-600'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -221,20 +272,25 @@ export default function ProjectsPage() {
                   </div>
                 </div>
 
-                {/* Chevron */}
-                <svg
-                  className="h-4 w-4 shrink-0 text-slate-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                  />
-                </svg>
+                {/* Status badge + Chevron */}
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_CONFIG[project.status ?? 'not_started'].bg} ${STATUS_CONFIG[project.status ?? 'not_started'].color}`}>
+                    {STATUS_CONFIG[project.status ?? 'not_started'].label}
+                  </span>
+                  <svg
+                    className="h-4 w-4 text-slate-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                </div>
               </Link>
             ))}
           </div>

@@ -51,7 +51,7 @@ export async function GET() {
 
   const { data: projects, error: projectsError } = await supabase
     .from('projects')
-    .select('id, name, street_address, city, state_zip, created_at, updated_at')
+    .select('id, name, street_address, city, state_zip, status, created_at, updated_at')
     .eq('org_id', profile.org_id)
     .order('name', { ascending: true });
 
