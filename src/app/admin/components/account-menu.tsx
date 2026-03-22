@@ -80,7 +80,7 @@ export function AccountMenu({ initials, fullName, email }: AccountMenuProps) {
       </button>
 
       {open ? (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-64 origin-bottom-left rounded-xl border border-slate-200 bg-white p-1.5 text-sm shadow-lg lg:bottom-auto lg:left-0 lg:top-full lg:mt-2 lg:origin-top-left">
+        <div className="absolute bottom-full left-0 z-50 mb-2 w-64 origin-bottom-left rounded-xl border border-slate-200 bg-white p-1.5 text-sm shadow-lg">
           {/* Profile header */}
           <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2.5 mb-1">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-semibold text-white">
