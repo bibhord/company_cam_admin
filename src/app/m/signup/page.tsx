@@ -81,10 +81,17 @@ export default function MobileSignupPage() {
     setGoogleLoading(true);
     setError('');
     try {
+      const isCapacitor = typeof window !== 'undefined' &&
+        !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+      const redirectUrl = isCapacitor
+        ? 'com.captureyourwork.app://auth/callback'
+        : `${window.location.origin}/auth/callback?next=/m`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/m`,
+          redirectTo: redirectUrl,
           skipBrowserRedirect: true,
         },
       });
@@ -94,35 +101,35 @@ export default function MobileSignupPage() {
         return;
       }
       if (data?.url) {
-        const isCapacitor = typeof window !== 'undefined' &&
-          !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
-
         if (isCapacitor) {
           const { Browser } = await import('@capacitor/browser');
-          const checkSession = async () => {
+          const { App } = await import('@capacitor/app');
+
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            await Browser.close();
+            urlListener.remove();
+            const urlObj = new URL(url);
+            const code = urlObj.searchParams.get('code');
+            if (code) {
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (!exchangeError) {
+                router.replace('/m');
+                return;
+              }
+              console.error('Code exchange error:', exchangeError);
+            }
+            setGoogleLoading(false);
+          });
+
+          await Browser.addListener('browserFinished', async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               router.replace('/m');
             } else {
               setGoogleLoading(false);
             }
-          };
-          const { App } = await import('@capacitor/app');
-          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
-            if (url.includes('/auth/callback')) {
-              await Browser.close();
-              urlListener.remove();
-              const urlObj = new URL(url);
-              const code = urlObj.searchParams.get('code');
-              if (code) {
-                await supabase.auth.exchangeCodeForSession(code);
-              }
-              await checkSession();
-            }
           });
-          await Browser.addListener('browserFinished', async () => {
-            await checkSession();
-          });
+
           await Browser.open({ url: data.url, presentationStyle: 'popover' });
         } else {
           window.location.assign(data.url);

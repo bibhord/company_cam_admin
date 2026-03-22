@@ -76,10 +76,19 @@ export default function MobileLoginPage() {
     setGoogleLoading(true);
     setError('');
     try {
+      // Check if running inside Capacitor (native app)
+      const isCapacitor = typeof window !== 'undefined' &&
+        !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+      // For Capacitor, redirect to custom URL scheme so iOS hands control back to the app
+      const redirectUrl = isCapacitor
+        ? 'com.captureyourwork.app://auth/callback'
+        : `${window.location.origin}/auth/callback?next=/m`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/m`,
+          redirectTo: redirectUrl,
           skipBrowserRedirect: true,
         },
       });
@@ -89,45 +98,38 @@ export default function MobileLoginPage() {
         return;
       }
       if (data?.url) {
-        // Check if running inside Capacitor (native app)
-        const isCapacitor = typeof window !== 'undefined' &&
-          !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
-
         if (isCapacitor) {
-          // Use Capacitor Browser to open in-app browser (SFSafariViewController)
-          // which can redirect back to the app
           const { Browser } = await import('@capacitor/browser');
+          const { App } = await import('@capacitor/app');
 
-          // Listen for the app to regain focus (browser closed or redirected back)
-          const checkSession = async () => {
+          // Listen for the custom URL scheme redirect
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            // Close the in-app browser
+            await Browser.close();
+            urlListener.remove();
+
+            // Extract the code and exchange it for a session
+            const urlObj = new URL(url);
+            const code = urlObj.searchParams.get('code');
+            if (code) {
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (!exchangeError) {
+                router.replace('/m');
+                return;
+              }
+              console.error('Code exchange error:', exchangeError);
+            }
+            setGoogleLoading(false);
+          });
+
+          // Fallback: check session when browser is closed manually
+          await Browser.addListener('browserFinished', async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               router.replace('/m');
             } else {
               setGoogleLoading(false);
             }
-          };
-
-          // When the in-app browser redirects to our URL, Capacitor can
-          // capture it. Listen for the app URL event.
-          const { App } = await import('@capacitor/app');
-          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
-            if (url.includes('/auth/callback')) {
-              await Browser.close();
-              urlListener.remove();
-              // Exchange the code from the URL
-              const urlObj = new URL(url);
-              const code = urlObj.searchParams.get('code');
-              if (code) {
-                await supabase.auth.exchangeCodeForSession(code);
-              }
-              await checkSession();
-            }
-          });
-
-          // Also check session when browser is closed manually
-          await Browser.addListener('browserFinished', async () => {
-            await checkSession();
           });
 
           await Browser.open({ url: data.url, presentationStyle: 'popover' });
