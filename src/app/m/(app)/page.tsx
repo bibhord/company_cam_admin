@@ -7,6 +7,7 @@ interface Photo {
   id: string;
   name: string;
   signed_url: string | null;
+  project_id: string | null;
   project_name: string | null;
   created_at: string;
 }
@@ -50,6 +51,9 @@ export default function PhotosPage() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [photoName, setPhotoName] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [reassigning, setReassigning] = useState(false);
+  const [detailProjects, setDetailProjects] = useState<Project[]>([]);
+  const [loadingDetailProjects, setLoadingDetailProjects] = useState(false);
 
   async function fetchPhotos() {
     setLoading(true);
@@ -170,6 +174,40 @@ export default function PhotosPage() {
   function closeModal() {
     setShowProjectModal(false);
     setPendingFile(null);
+  }
+
+  async function openReassign() {
+    setReassigning(true);
+    setLoadingDetailProjects(true);
+    try {
+      const res = await fetch('/api/m/projects');
+      if (res.ok) {
+        const data = await res.json();
+        setDetailProjects(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    } finally {
+      setLoadingDetailProjects(false);
+    }
+  }
+
+  async function handleReassign(projectId: string | null) {
+    if (!selectedPhoto) return;
+    try {
+      const res = await fetch(`/api/m/photos/${selectedPhoto.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      if (res.ok) {
+        setSelectedPhoto(null);
+        setReassigning(false);
+        await fetchPhotos();
+      }
+    } catch (err) {
+      console.error('Failed to reassign photo:', err);
+    }
   }
 
   const filteredProjects = projects.filter((p) => {
@@ -332,7 +370,7 @@ export default function PhotosPage() {
 
       {/* Photo Detail Modal */}
       {selectedPhoto && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => setSelectedPhoto(null)}>
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => { setSelectedPhoto(null); setReassigning(false); }}>
           <div
             className="w-full max-w-lg rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
             onClick={(e) => e.stopPropagation()}
@@ -342,7 +380,7 @@ export default function PhotosPage() {
               <div className="relative h-64 w-full overflow-hidden rounded-t-2xl bg-slate-100">
                 <img src={selectedPhoto.signed_url} alt={selectedPhoto.name} className="h-full w-full object-cover" />
                 <button
-                  onClick={() => setSelectedPhoto(null)}
+                  onClick={() => { setSelectedPhoto(null); setReassigning(false); }}
                   className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-sm"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -356,14 +394,69 @@ export default function PhotosPage() {
               <h3 className="text-base font-semibold text-slate-900">{selectedPhoto.name}</h3>
 
               <div className="space-y-2">
-                {selectedPhoto.project_name && (
-                  <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                    </svg>
-                    <span className="text-sm text-slate-700">{selectedPhoto.project_name}</span>
+                {/* Project row with reassign */}
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                  </svg>
+                  <span className="flex-1 text-sm text-slate-700">
+                    {selectedPhoto.project_name ?? 'No project'}
+                  </span>
+                  <button
+                    onClick={openReassign}
+                    className="text-xs font-medium text-amber-600 active:text-amber-700"
+                  >
+                    {reassigning ? 'Cancel' : 'Change'}
+                  </button>
+                </div>
+
+                {/* Reassign project list */}
+                {reassigning && (
+                  <div className="rounded-xl border border-slate-200 overflow-hidden">
+                    {loadingDetailProjects ? (
+                      <div className="space-y-1 p-2">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-9 animate-pulse rounded-lg bg-slate-100" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="max-h-48 overflow-y-auto">
+                        {/* Unassign option */}
+                        <button
+                          onClick={() => handleReassign(null)}
+                          className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 active:bg-slate-100 ${
+                            !selectedPhoto.project_id ? 'bg-amber-50 text-amber-700 font-medium' : 'text-slate-500'
+                          }`}
+                        >
+                          <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                          </svg>
+                          No project
+                        </button>
+                        {detailProjects.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleReassign(p.id)}
+                            className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 active:bg-slate-100 border-t border-slate-100 ${
+                              selectedPhoto.project_id === p.id ? 'bg-amber-50 text-amber-700 font-medium' : 'text-slate-700'
+                            }`}
+                          >
+                            <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                            </svg>
+                            <span className="truncate">{p.name}</span>
+                            {selectedPhoto.project_id === p.id && (
+                              <svg className="h-4 w-4 ml-auto shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
+
                 <div className="flex items-center gap-2">
                   <svg className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -382,7 +475,7 @@ export default function PhotosPage() {
               </div>
 
               <button
-                onClick={() => setSelectedPhoto(null)}
+                onClick={() => { setSelectedPhoto(null); setReassigning(false); }}
                 className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
               >
                 Close

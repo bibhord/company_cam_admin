@@ -40,6 +40,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   if (typeof body.name === 'string') updates.name = body.name.trim();
   if (typeof body.notes === 'string') updates.notes = body.notes.trim() || null;
+  if (body.project_id !== undefined) updates.project_id = body.project_id || null;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No fields to update.' }, { status: 400 });
