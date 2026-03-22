@@ -91,8 +91,42 @@ export default function MobileSignupPage() {
       if (error) {
         setError(error.message);
         setGoogleLoading(false);
-      } else if (data?.url) {
-        window.location.assign(data.url);
+        return;
+      }
+      if (data?.url) {
+        const isCapacitor = typeof window !== 'undefined' &&
+          !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+        if (isCapacitor) {
+          const { Browser } = await import('@capacitor/browser');
+          const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              router.replace('/m');
+            } else {
+              setGoogleLoading(false);
+            }
+          };
+          const { App } = await import('@capacitor/app');
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            if (url.includes('/auth/callback')) {
+              await Browser.close();
+              urlListener.remove();
+              const urlObj = new URL(url);
+              const code = urlObj.searchParams.get('code');
+              if (code) {
+                await supabase.auth.exchangeCodeForSession(code);
+              }
+              await checkSession();
+            }
+          });
+          await Browser.addListener('browserFinished', async () => {
+            await checkSession();
+          });
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          window.location.assign(data.url);
+        }
       }
     } catch {
       setError('Something went wrong. Please try again.');

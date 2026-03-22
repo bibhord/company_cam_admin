@@ -86,9 +86,55 @@ export default function MobileLoginPage() {
       if (error) {
         setError(error.message);
         setGoogleLoading(false);
-      } else if (data?.url) {
-        // Use location.assign to keep PWA context on iOS
-        window.location.assign(data.url);
+        return;
+      }
+      if (data?.url) {
+        // Check if running inside Capacitor (native app)
+        const isCapacitor = typeof window !== 'undefined' &&
+          !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+        if (isCapacitor) {
+          // Use Capacitor Browser to open in-app browser (SFSafariViewController)
+          // which can redirect back to the app
+          const { Browser } = await import('@capacitor/browser');
+
+          // Listen for the app to regain focus (browser closed or redirected back)
+          const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              router.replace('/m');
+            } else {
+              setGoogleLoading(false);
+            }
+          };
+
+          // When the in-app browser redirects to our URL, Capacitor can
+          // capture it. Listen for the app URL event.
+          const { App } = await import('@capacitor/app');
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            if (url.includes('/auth/callback')) {
+              await Browser.close();
+              urlListener.remove();
+              // Exchange the code from the URL
+              const urlObj = new URL(url);
+              const code = urlObj.searchParams.get('code');
+              if (code) {
+                await supabase.auth.exchangeCodeForSession(code);
+              }
+              await checkSession();
+            }
+          });
+
+          // Also check session when browser is closed manually
+          await Browser.addListener('browserFinished', async () => {
+            await checkSession();
+          });
+
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          // Regular browser / PWA — navigate directly
+          window.location.assign(data.url);
+        }
       }
     } catch {
       setError('Something went wrong. Please try again.');
