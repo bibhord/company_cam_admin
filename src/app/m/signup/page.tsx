@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState, useEffect, useCallback } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -16,23 +16,29 @@ export default function MobileSignupPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
-  // When the PWA becomes visible again after OAuth redirect in Safari,
-  // check if a session now exists and redirect if so.
-  const checkSessionOnReturn = useCallback(async () => {
-    if (document.visibilityState === 'visible' && googleLoading) {
+  // On mount + visibility/focus, check if already authenticated.
+  // Handles PWA returning after OAuth completed in Safari.
+  useEffect(() => {
+    async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push('/m');
-      } else {
-        setGoogleLoading(false);
+        router.replace('/m');
       }
     }
-  }, [googleLoading, supabase, router]);
+    checkSession();
 
-  useEffect(() => {
-    document.addEventListener('visibilitychange', checkSessionOnReturn);
-    return () => document.removeEventListener('visibilitychange', checkSessionOnReturn);
-  }, [checkSessionOnReturn]);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') checkSession();
+    };
+    const handleFocus = () => checkSession();
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [supabase, router]);
 
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,7 +84,7 @@ export default function MobileSignupPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/m`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/m/login`,
         },
       });
       if (error) {

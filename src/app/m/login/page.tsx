@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState, useEffect, useCallback } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -14,24 +14,38 @@ export default function MobileLoginPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
-  // When the PWA becomes visible again after OAuth redirect in Safari,
-  // check if a session now exists and redirect if so.
-  const checkSessionOnReturn = useCallback(async () => {
-    if (document.visibilityState === 'visible' && googleLoading) {
+  // On mount + visibility change, check if user is already authenticated.
+  // This handles: PWA returning after OAuth in Safari, or user navigating
+  // back to login when already signed in.
+  useEffect(() => {
+    async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push('/m');
-      } else {
-        // Session not set yet — reset the spinner
-        setGoogleLoading(false);
+        router.replace('/m');
       }
     }
-  }, [googleLoading, supabase, router]);
 
-  useEffect(() => {
-    document.addEventListener('visibilitychange', checkSessionOnReturn);
-    return () => document.removeEventListener('visibilitychange', checkSessionOnReturn);
-  }, [checkSessionOnReturn]);
+    // Check immediately on mount
+    checkSession();
+
+    // Also check when page becomes visible (user switches back to PWA)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+
+    // Also check on focus (some iOS versions fire this instead of visibilitychange)
+    const handleFocus = () => checkSession();
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [supabase, router]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +79,7 @@ export default function MobileLoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/m`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/m/login`,
         },
       });
       if (error) {
