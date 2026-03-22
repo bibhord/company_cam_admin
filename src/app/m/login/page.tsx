@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -13,6 +13,25 @@ export default function MobileLoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
+
+  // When the PWA becomes visible again after OAuth redirect in Safari,
+  // check if a session now exists and redirect if so.
+  const checkSessionOnReturn = useCallback(async () => {
+    if (document.visibilityState === 'visible' && googleLoading) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/m');
+      } else {
+        // Session not set yet — reset the spinner
+        setGoogleLoading(false);
+      }
+    }
+  }, [googleLoading, supabase, router]);
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', checkSessionOnReturn);
+    return () => document.removeEventListener('visibilitychange', checkSessionOnReturn);
+  }, [checkSessionOnReturn]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
