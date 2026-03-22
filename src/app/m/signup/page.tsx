@@ -106,7 +106,15 @@ export default function MobileSignupPage() {
           const { Browser } = await import('@capacitor/browser');
           const { App } = await import('@capacitor/app');
 
+          // Remove any stale listeners from previous attempts
+          await App.removeAllListeners();
+          await Browser.removeAllListeners();
+
+          // Track whether appUrlOpen already handled auth
+          let handledByUrlOpen = false;
+
           const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            handledByUrlOpen = true;
             await Browser.close();
             urlListener.remove();
 
@@ -141,7 +149,11 @@ export default function MobileSignupPage() {
             setGoogleLoading(false);
           });
 
+          // Fallback: check session when browser is closed manually (user dismissed it)
           await Browser.addListener('browserFinished', async () => {
+            // Wait briefly — appUrlOpen may fire right after browserFinished
+            await new Promise(r => setTimeout(r, 1000));
+            if (handledByUrlOpen) return;
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               router.replace('/m');
