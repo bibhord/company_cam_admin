@@ -46,7 +46,17 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('name');
+  const [sortAsc, setSortAsc] = useState(true);
   const [view, setView] = useState<'list' | 'map'>('list');
+
+  function toggleSort(key: SortKey) {
+    if (sortBy === key) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortBy(key);
+      setSortAsc(true);
+    }
+  }
 
   useEffect(() => {
     async function fetchProjects() {
@@ -77,13 +87,14 @@ export default function ProjectsPage() {
       );
     })
     .sort((a, b) => {
+      const dir = sortAsc ? 1 : -1;
       if (sortBy === 'status') {
         const aOrder = STATUS_CONFIG[a.status ?? 'not_started'].order;
         const bOrder = STATUS_CONFIG[b.status ?? 'not_started'].order;
-        if (aOrder !== bOrder) return aOrder - bOrder;
+        if (aOrder !== bOrder) return (aOrder - bOrder) * dir;
         return a.name.localeCompare(b.name);
       }
-      return a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name) * dir;
     });
 
   return (
@@ -119,24 +130,34 @@ export default function ProjectsPage() {
         <div className="flex items-center gap-2">
           <div className="flex flex-1 rounded-full bg-slate-200 p-0.5">
             <button
-              onClick={() => setSortBy('name')}
-              className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
+              onClick={() => toggleSort('name')}
+              className={`flex-1 flex items-center justify-center gap-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
                 sortBy === 'name'
                   ? 'bg-amber-500 text-white shadow-sm'
                   : 'text-slate-600'
               }`}
             >
               A-Z
+              {sortBy === 'name' && (
+                <svg className={`h-3 w-3 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                </svg>
+              )}
             </button>
             <button
-              onClick={() => setSortBy('status')}
-              className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
+              onClick={() => toggleSort('status')}
+              className={`flex-1 flex items-center justify-center gap-1 rounded-full py-1.5 text-xs font-medium transition-colors ${
                 sortBy === 'status'
                   ? 'bg-amber-500 text-white shadow-sm'
                   : 'text-slate-600'
               }`}
             >
               Status
+              {sortBy === 'status' && (
+                <svg className={`h-3 w-3 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                </svg>
+              )}
             </button>
           </div>
           <div className="flex rounded-full bg-slate-200 p-0.5">
