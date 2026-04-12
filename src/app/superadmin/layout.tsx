@@ -39,7 +39,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-amber-500">SuperAdmin</p>
-              <p className="text-xs text-slate-500">CaptureWork Internal</p>
+              <p className="text-xs text-slate-500">CaptureYourWork Internal</p>
             </div>
           </div>
 

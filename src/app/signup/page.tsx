@@ -94,7 +94,7 @@ export default function SignupPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
               </svg>
             </div>
-            <span className="text-white text-xl font-semibold tracking-tight">CaptureWork</span>
+            <span className="text-white text-xl font-semibold tracking-tight">CaptureYourWork</span>
           </div>
 
           <div className="max-w-md">
@@ -131,7 +131,7 @@ export default function SignupPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
               </svg>
             </div>
-            <span className="text-slate-900 text-lg font-semibold tracking-tight">CaptureWork</span>
+            <span className="text-slate-900 text-lg font-semibold tracking-tight">CaptureYourWork</span>
           </div>
 
           <div className="mb-8">
@@ -271,7 +271,7 @@ export default function SignupPage() {
           </p>
 
           <p className="mt-6 text-center text-xs text-slate-400">
-            &copy; {new Date().getFullYear()} CaptureWork. All rights reserved.
+            &copy; {new Date().getFullYear()} CaptureYourWork. All rights reserved.
           </p>
         </div>
       </div>

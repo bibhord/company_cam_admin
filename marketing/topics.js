@@ -56,8 +56,8 @@ export const TOPICS = [
   },
   {
     slug: 'companycam-vs-capturework',
-    title: 'CaptureWork vs CompanyCam: Which Is Right for Your Crew?',
-    keyword: 'CaptureWork vs CompanyCam',
-    description: 'A detailed comparison of CaptureWork and CompanyCam — features, pricing, and which app fits small contractor businesses better.',
+    title: 'CaptureYourWork vs CompanyCam: Which Is Right for Your Crew?',
+    keyword: 'CaptureYourWork vs CompanyCam',
+    description: 'A detailed comparison of CaptureYourWork and CompanyCam — features, pricing, and which app fits small contractor businesses better.',
   },
 ];

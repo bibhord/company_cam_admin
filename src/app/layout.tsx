@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CaptureWork — Job Site Photo Documentation",
+  title: "CaptureYourWork — Job Site Photo Documentation",
   description: "Capture, organize, and share job site progress with your team in real-time.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "CaptureWork",
+    title: "CaptureYourWork",
   },
   other: {
     "mobile-web-app-capable": "yes",

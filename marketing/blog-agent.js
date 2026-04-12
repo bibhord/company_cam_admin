@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CaptureWork Blog Agent
+ * CaptureYourWork Blog Agent
  * Picks the next unpublished topic, generates an SEO article via the Claude Code CLI,
  * builds a static HTML page, and publishes it to S3.
  *
@@ -69,7 +69,7 @@ function formatDate(iso) {
 // ─── article generation ───────────────────────────────────────────────────────
 
 function buildPrompt(topic) {
-  return `Write a comprehensive, SEO-optimized blog article for CaptureWork, a job site photo documentation app for contractors that competes with CompanyCam.
+  return `Write a comprehensive, SEO-optimized blog article for CaptureYourWork, a job site photo documentation app for contractors that competes with CompanyCam.
 
 Topic: ${topic.title}
 Target keyword: "${topic.keyword}"
@@ -81,7 +81,7 @@ Requirements:
 - Structure: intro → 4–6 H2 sections with practical content → conclusion with CTA
 - Tone: practical, plain-spoken, written for independent contractors and small crews (not enterprise)
 - Include specific, actionable advice (not filler)
-- CTA at the end: encourage readers to try CaptureWork free for 14 days at ${SITE_URL}
+- CTA at the end: encourage readers to try CaptureYourWork free for 14 days at ${SITE_URL}
 - Do NOT mention competitor brand names in a negative way — focus on what good documentation looks like
 - Output ONLY the article body as clean HTML: use <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>
 - Do NOT include <html>, <head>, <body>, or any wrapper tags — just the inner content
@@ -99,7 +99,7 @@ function buildPage(topic, articleHtml, publishedDate) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${topic.title} | CaptureWork Blog</title>
+  <title>${topic.title} | CaptureYourWork Blog</title>
   <meta name="description" content="${topic.description}" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="${canonicalUrl}" />
@@ -109,7 +109,7 @@ function buildPage(topic, articleHtml, publishedDate) {
   <meta property="og:title" content="${topic.title}" />
   <meta property="og:description" content="${topic.description}" />
   <meta property="og:url" content="${canonicalUrl}" />
-  <meta property="og:site_name" content="CaptureWork" />
+  <meta property="og:site_name" content="CaptureYourWork" />
   <meta property="article:published_time" content="${publishedDate}" />
 
   <!-- Twitter -->
@@ -128,12 +128,12 @@ function buildPage(topic, articleHtml, publishedDate) {
     "dateModified": "${publishedDate}",
     "author": {
       "@type": "Organization",
-      "name": "CaptureWork",
+      "name": "CaptureYourWork",
       "url": "${SITE_URL}"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "CaptureWork",
+      "name": "CaptureYourWork",
       "url": "${SITE_URL}"
     },
     "mainEntityOfPage": {
@@ -176,7 +176,7 @@ function buildPage(topic, articleHtml, publishedDate) {
 <body>
 
 <header class="site-header">
-  <a href="${SITE_URL}" class="logo">CaptureWork</a>
+  <a href="${SITE_URL}" class="logo">CaptureYourWork</a>
   <nav>
     <a href="${SITE_URL}/#features">Features</a>
     <a href="${SITE_URL}/#pricing">Pricing</a>
@@ -188,7 +188,7 @@ function buildPage(topic, articleHtml, publishedDate) {
 <div class="hero">
   <p class="breadcrumb"><a href="${SITE_URL}/">Home</a> › <a href="${SITE_URL}/blog/">Blog</a> › ${topic.title}</p>
   <h1>${topic.title}</h1>
-  <p class="meta">Published ${formattedDate} &nbsp;·&nbsp; CaptureWork Team</p>
+  <p class="meta">Published ${formattedDate} &nbsp;·&nbsp; CaptureYourWork Team</p>
 </div>
 
 <div class="article-wrap">
@@ -196,8 +196,8 @@ function buildPage(topic, articleHtml, publishedDate) {
 
   <div class="cta-box">
     <h3>Ready to document your jobs like a pro?</h3>
-    <p>CaptureWork gives contractors GPS-tagged photos, organized projects, and client-ready PDF reports — free for 14 days, no credit card required.</p>
-    <a href="${SITE_URL}/#download" class="cta-btn">Try CaptureWork Free</a>
+    <p>CaptureYourWork gives contractors GPS-tagged photos, organized projects, and client-ready PDF reports — free for 14 days, no credit card required.</p>
+    <a href="${SITE_URL}/#download" class="cta-btn">Try CaptureYourWork Free</a>
   </div>
 </div>
 
@@ -208,7 +208,7 @@ function buildPage(topic, articleHtml, publishedDate) {
     <a href="${SITE_URL}/#pricing">Pricing</a>
     <a href="mailto:hello@captureyourwork.com">Contact</a>
   </p>
-  <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureWork. All rights reserved.</p>
+  <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureYourWork. All rights reserved.</p>
 </footer>
 
 </body>
@@ -232,8 +232,8 @@ function buildBlogIndex(publishedTopics) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blog | CaptureWork — Tips for Contractors</title>
-  <meta name="description" content="Practical guides on job site photo documentation, contractor apps, and protecting your work — from the CaptureWork team." />
+  <title>Blog | CaptureYourWork — Tips for Contractors</title>
+  <meta name="description" content="Practical guides on job site photo documentation, contractor apps, and protecting your work — from the CaptureYourWork team." />
   <link rel="canonical" href="${SITE_URL}/blog/" />
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -260,7 +260,7 @@ function buildBlogIndex(publishedTopics) {
 </head>
 <body>
 <header class="site-header">
-  <a href="${SITE_URL}" class="logo">CaptureWork</a>
+  <a href="${SITE_URL}" class="logo">CaptureYourWork</a>
   <nav>
     <a href="${SITE_URL}/#features">Features</a>
     <a href="${SITE_URL}/#pricing">Pricing</a>
@@ -269,7 +269,7 @@ function buildBlogIndex(publishedTopics) {
   </nav>
 </header>
 <div class="hero">
-  <h1>The CaptureWork Blog</h1>
+  <h1>The CaptureYourWork Blog</h1>
   <p>Practical guides for contractors who document their work</p>
 </div>
 ${publishedTopics.length > 0
@@ -277,7 +277,7 @@ ${publishedTopics.length > 0
   : '<div class="empty"><p>Articles coming soon — check back shortly.</p></div>'}
 <footer class="site-footer">
   <p><a href="${SITE_URL}/">Home</a><a href="${SITE_URL}/blog/">Blog</a><a href="${SITE_URL}/#pricing">Pricing</a><a href="mailto:hello@captureyourwork.com">Contact</a></p>
-  <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureWork. All rights reserved.</p>
+  <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureYourWork. All rights reserved.</p>
 </footer>
 </body>
 </html>`;

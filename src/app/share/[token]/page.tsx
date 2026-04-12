@@ -77,7 +77,7 @@ export default async function GuestProjectView({ params }: RouteParams) {
           href="/signup?ref=guest_share"
           className="ml-4 flex-shrink-0 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50"
         >
-          Try CaptureWork free
+          Try CaptureYourWork free
         </a>
       </div>
 
@@ -138,7 +138,7 @@ export default async function GuestProjectView({ params }: RouteParams) {
         <div className="mt-12 rounded-2xl border border-indigo-100 bg-indigo-50 px-6 py-8 text-center">
           <h2 className="text-lg font-semibold text-slate-900">Organize your own jobs like this</h2>
           <p className="mt-2 text-sm text-slate-600">
-            CaptureWork helps contractors capture, organize, and share job-site photos in real time.
+            CaptureYourWork helps contractors capture, organize, and share job-site photos in real time.
           </p>
           <a
             href="/signup?ref=guest_share_footer"

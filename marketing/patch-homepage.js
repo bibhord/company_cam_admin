@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CaptureWork Homepage SEO Patcher
+ * CaptureYourWork Homepage SEO Patcher
  * Downloads the current index.html from S3, applies SEO improvements, re-uploads.
  *
  * Usage:
@@ -43,7 +43,7 @@ function patch(html) {
   }
 
   // ── 3. Ensure meta description is present ────────────────────────────────
-  const metaDesc = '<meta name="description" content="CaptureWork helps contractors capture, organize, and share GPS-tagged job site photos. Generate client-ready PDF reports in seconds. Try free for 14 days — no credit card required." />';
+  const metaDesc = '<meta name="description" content="CaptureYourWork helps contractors capture, organize, and share GPS-tagged job site photos. Generate client-ready PDF reports in seconds. Try free for 14 days — no credit card required." />';
   if (!out.includes('name="description"')) {
     out = out.replace('</head>', `  ${metaDesc}\n</head>`);
   }
@@ -53,12 +53,12 @@ function patch(html) {
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${SITE_URL}/" />
-  <meta property="og:title" content="CaptureWork — Job Site Photo Documentation for Contractors" />
+  <meta property="og:title" content="CaptureYourWork — Job Site Photo Documentation for Contractors" />
   <meta property="og:description" content="GPS-tagged photos, project albums, and client-ready PDF reports. Built for contractors who need proof of work." />
-  <meta property="og:site_name" content="CaptureWork" />
+  <meta property="og:site_name" content="CaptureYourWork" />
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="CaptureWork — Job Site Photo Documentation for Contractors" />
+  <meta name="twitter:title" content="CaptureYourWork — Job Site Photo Documentation for Contractors" />
   <meta name="twitter:description" content="GPS-tagged photos, project albums, and PDF reports for contractors. Try free for 14 days." />`;
   if (!out.includes('og:type')) {
     out = out.replace('</head>', `${ogBlock}\n</head>`);
@@ -70,7 +70,7 @@ function patch(html) {
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "CaptureWork",
+    "name": "CaptureYourWork",
     "url": "${SITE_URL}",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "iOS, Android, Web",
@@ -103,8 +103,8 @@ function patch(html) {
   if (/<title>/i.test(out)) {
     // Only replace if it looks like a generic or old title
     out = out.replace(
-      /<title>(?!CaptureWork —)[^<]{0,120}<\/title>/i,
-      '<title>CaptureWork — Job Site Photo Documentation App for Contractors</title>'
+      /<title>(?!CaptureYourWork —)[^<]{0,120}<\/title>/i,
+      '<title>CaptureYourWork — Job Site Photo Documentation App for Contractors</title>'
     );
   }
 

@@ -116,7 +116,7 @@ export default async function AdminLayout({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 leading-tight">CaptureWork</p>
+              <p className="text-sm font-semibold text-slate-900 leading-tight">CaptureYourWork</p>
               <p className="text-xs text-slate-500 leading-tight truncate max-w-[160px]">{orgName}</p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default async function AdminLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-slate-900">CaptureWork</span>
+              <span className="text-sm font-semibold text-slate-900">CaptureYourWork</span>
             </Link>
             <AccountMenu
               initials={initials || 'U'}

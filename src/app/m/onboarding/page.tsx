@@ -57,7 +57,7 @@ export default function OnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Welcome to CaptureWork</h1>
+          <h1 className="text-xl font-bold text-slate-900">Welcome to CaptureYourWork</h1>
           <p className="mt-1 text-sm text-slate-500">Tell us about your work</p>
         </div>
 

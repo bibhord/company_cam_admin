@@ -38,7 +38,7 @@ export async function generateReportPdf(data: ReportPdfData): Promise<Uint8Array
 
   // Amber header bar
   cover.drawRectangle({ x: 0, y: H - 80, width: W, height: 80, color: rgb(...AMBER) });
-  cover.drawText('CaptureWork', { x: MARGIN, y: H - 52, size: 28, font: bold, color: rgb(1, 1, 1) });
+  cover.drawText('CaptureYourWork', { x: MARGIN, y: H - 52, size: 28, font: bold, color: rgb(1, 1, 1) });
 
   // Project + report title
   cover.drawText(data.projectName, {
