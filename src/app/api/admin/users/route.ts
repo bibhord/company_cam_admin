@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { checkFeature } from '@/lib/gate';
 
 interface ProfileRecord {
   org_id: string;
@@ -50,6 +51,14 @@ export async function POST(request: Request) {
 
   if (!profile || !canManageUsers) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  const { allowed, effectivePlan } = await checkFeature(supabase, profile.org_id, 'team_members');
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Inviting team members requires a Pro plan.', upgrade: true, currentPlan: effectivePlan },
+      { status: 402 }
+    );
   }
 
   const body = await request.json().catch(() => null);

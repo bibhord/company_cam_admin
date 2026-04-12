@@ -70,7 +70,7 @@ export default function AuthSuccessPage() {
 
         <h1 className="text-xl font-bold text-slate-900 mb-2">You&apos;re signed in!</h1>
         <p className="text-sm text-slate-500 mb-8">
-          Return to the PhotoDoc app to continue.
+          Return to the CaptureWork app to continue.
         </p>
 
         {/* Visual hint to go back to the app */}
@@ -83,7 +83,7 @@ export default function AuthSuccessPage() {
               </svg>
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-slate-900">PhotoDoc</p>
+              <p className="text-sm font-semibold text-slate-900">CaptureWork</p>
               <p className="text-xs text-slate-500">Tap the app icon on your home screen</p>
             </div>
           </div>

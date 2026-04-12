@@ -1,6 +1,8 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { processWatermark } from '@/lib/watermark';
+import { fireReportNudge } from '@/lib/nudge';
 
 interface ProfileRecord {
   org_id: string;
@@ -44,6 +46,10 @@ export async function POST(request: NextRequest) {
   const file = formData.get('file') as File | null;
   const projectId = formData.get('projectId') as string | null;
   const photoName = (formData.get('photoName') as string | null)?.trim() || null;
+  const latRaw = formData.get('lat') as string | null;
+  const lonRaw = formData.get('lon') as string | null;
+  const lat = latRaw ? Number(latRaw) : null;
+  const lon = lonRaw ? Number(lonRaw) : null;
 
   if (!file) {
     return NextResponse.json({ error: 'File is required.' }, { status: 400 });
@@ -77,6 +83,8 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
       status: 'active',
       upload_status: 'uploaded',
+      lat: lat ?? null,
+      lon: lon ?? null,
     })
     .select()
     .single();
@@ -85,6 +93,18 @@ export async function POST(request: NextRequest) {
     console.error('Error inserting photo record:', insertError);
     return NextResponse.json({ error: `Unable to save photo record: ${insertError.message}` }, { status: 500 });
   }
+
+  // Post-response background work: watermark + nudge
+  const orgId = profile.org_id;
+  const userId = user.id;
+  const createdAt = photo.created_at as string;
+
+  after(async () => {
+    await Promise.allSettled([
+      processWatermark({ photoId: photo.id, objectKey, orgId, lat, lon, createdAt }),
+      projectId ? fireReportNudge(projectId, orgId, userId) : Promise.resolve(),
+    ]);
+  });
 
   return NextResponse.json(photo);
 }

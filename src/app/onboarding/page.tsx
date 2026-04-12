@@ -73,7 +73,7 @@ export default function OnboardingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
               </svg>
             </div>
-            <span className="text-white text-xl font-semibold tracking-tight">PhotoDoc</span>
+            <span className="text-white text-xl font-semibold tracking-tight">CaptureWork</span>
           </div>
 
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
               </svg>
             </div>
-            <span className="text-slate-900 text-lg font-semibold tracking-tight">PhotoDoc</span>
+            <span className="text-slate-900 text-lg font-semibold tracking-tight">CaptureWork</span>
           </div>
 
           {/* Progress dots */}

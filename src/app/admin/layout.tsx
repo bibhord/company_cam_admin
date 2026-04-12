@@ -13,8 +13,10 @@ interface ProfileRecord {
   last_name: string | null;
   role: string;
   onboarding_complete: boolean | null;
+  is_super_admin?: boolean;
   organizations?: {
     name: string | null;
+    status: string | null;
   } | null;
 }
 
@@ -63,13 +65,24 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, first_name, last_name, role, onboarding_complete, organizations ( name )')
+    .select('org_id, first_name, last_name, role, onboarding_complete, is_super_admin, organizations ( name, status )')
     .eq('user_id', user.id)
     .maybeSingle<ProfileRecord>();
+
+  // Super admins belong to the internal tools, not a customer org
+  if (profile?.is_super_admin) {
+    redirect('/superadmin');
+  }
 
   // Redirect to onboarding if profile missing or not complete
   if (!profile || !profile.onboarding_complete) {
     redirect('/onboarding');
+  }
+
+  // Block access if org is pending approval or suspended
+  const orgStatus = profile.organizations?.status;
+  if (orgStatus === 'pending' || orgStatus === 'suspended') {
+    redirect('/admin/pending');
   }
 
   const initials = profile
@@ -103,7 +116,7 @@ export default async function AdminLayout({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 leading-tight">PhotoDoc</p>
+              <p className="text-sm font-semibold text-slate-900 leading-tight">CaptureWork</p>
               <p className="text-xs text-slate-500 leading-tight truncate max-w-[160px]">{orgName}</p>
             </div>
           </div>
@@ -134,7 +147,7 @@ export default async function AdminLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-slate-900">PhotoDoc</span>
+              <span className="text-sm font-semibold text-slate-900">CaptureWork</span>
             </Link>
             <AccountMenu
               initials={initials || 'U'}

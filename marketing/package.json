@@ -1,0 +1,13 @@
+{
+  "name": "capturework-marketing",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "patch": "node patch-homepage.js",
+    "blog": "node blog-agent.js",
+    "blog:dry": "node blog-agent.js --dry-run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0"
+  }
+}

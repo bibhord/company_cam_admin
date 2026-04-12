@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { checkFeature } from '@/lib/gate';
 
 interface ProfileRecord {
   org_id: string;
@@ -37,6 +38,14 @@ export async function POST(request: Request) {
 
   if (!(profile.role === 'admin' || profile.role === 'manager')) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  const { allowed, effectivePlan } = await checkFeature(supabase, profile.org_id, 'pdf_reports');
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'PDF reports require a Pro plan.', upgrade: true, currentPlan: effectivePlan },
+      { status: 402 }
+    );
   }
 
   const body = await request.json().catch(() => null);

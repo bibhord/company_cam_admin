@@ -20,12 +20,12 @@ interface ProfileRecord {
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'PhotoDoc Mobile',
+  title: 'CaptureWork Mobile',
   description: 'Capture and organize job site photos on the go.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PhotoDoc',
+    title: 'CaptureWork',
   },
 };
 

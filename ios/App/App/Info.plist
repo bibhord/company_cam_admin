@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>PhotoDoc</string>
+        <string>CaptureWork</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -58,11 +58,13 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CaptureWork tags your job site photos with GPS coordinates to document exact work locations.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>PhotoDoc needs camera access to capture job site photos.</string>
+	<string>CaptureWork needs camera access to capture job site photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>PhotoDoc needs photo library access to upload job site photos.</string>
+	<string>CaptureWork needs photo library access to upload job site photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>PhotoDoc needs permission to save photos to your library.</string>
+	<string>CaptureWork needs permission to save photos to your library.</string>
 </dict>
 </plist>

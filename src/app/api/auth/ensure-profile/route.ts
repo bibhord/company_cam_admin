@@ -42,7 +42,7 @@ export async function POST() {
 
   const { data: org, error: orgError } = await serviceClient
     .from('organizations')
-    .insert({ name: orgName })
+    .insert({ name: orgName, status: 'pending' })
     .select('id')
     .single();
 

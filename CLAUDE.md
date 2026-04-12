@@ -9,7 +9,7 @@ A cloud-based photo documentation and communication web app for contractors — 
 | Layer | Tech | Location |
 |-------|------|----------|
 | Web admin | Next.js 15 + React 19 + Tailwind 4 | This repo (`nextjs-supabase-admin`) |
-| Mobile app | Dart/Flutter | `/Users/bibhor-mbp2/Projects/photodoc` |
+| Mobile app | PWA + Capacitor (iOS) | `src/app/m/` in this repo |
 | Backend/DB | Supabase (Postgres + Auth + Storage) | `dkgcfmbbhhryrbchzcch.supabase.co` |
 | Hosting | Vercel | — |
 

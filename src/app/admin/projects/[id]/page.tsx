@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { PhotoCard } from '../../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../../types';
+import { ShareProjectButton } from './share-button';
 
 interface ProfileRecord {
   org_id: string;
@@ -289,6 +290,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
               Created on {formatDate(project.created_at)} by {project.created_by ?? 'Unknown user'}
             </p>
           </div>
+          {canEdit && <ShareProjectButton projectId={project.id} />}
         </header>
 
         {photoRecords.length === 0 ? (
