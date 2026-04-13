@@ -38,6 +38,8 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [savingPref, setSavingPref] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -73,6 +75,20 @@ export default function SettingsPage() {
       console.error('Failed to update preference:', err);
     } finally {
       setSavingPref(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      await fetch('/api/m/delete-account', { method: 'DELETE' });
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.href = '/m/login';
+    } catch (err) {
+      console.error('Delete account failed:', err);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -238,6 +254,37 @@ export default function SettingsPage() {
         >
           {signingOut ? 'Signing Out...' : 'Sign Out'}
         </button>
+
+        {/* Delete account */}
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full py-3 text-xs text-slate-400 underline"
+          >
+            Delete Account
+          </button>
+        ) : (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+            <p className="text-sm font-semibold text-red-700">Delete your account?</p>
+            <p className="text-xs text-red-600">This will permanently delete your account and all associated data. This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm text-slate-600 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {deleting ? 'Deleting...' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
