@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { notifyNewSignup } from '@/lib/notify-signup';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -59,13 +60,16 @@ export async function GET(request: Request) {
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') ?? null,
               role: 'admin',
               is_admin: true,
-              is_active: true,
+              is_active: false,
               onboarding_complete: false,
             });
 
             if (profileError) {
               console.error('OAuth callback: failed to create profile:', profileError);
             }
+
+            const displayName = user.user_metadata?.full_name || user.email || 'User';
+            await notifyNewSignup(user.email || '', displayName);
           }
         }
       } else {

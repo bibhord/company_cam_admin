@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { notifyNewSignup } from '@/lib/notify-signup';
 
 export async function POST() {
   const supabase = createRouteHandlerClient({ cookies: () => cookies() });
@@ -58,7 +59,7 @@ export async function POST() {
     last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') ?? null,
     role: 'admin',
     is_admin: true,
-    is_active: true,
+    is_active: false,
     onboarding_complete: false,
   });
 
@@ -66,6 +67,9 @@ export async function POST() {
     console.error('ensure-profile: failed to create profile:', profileError);
     return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
   }
+
+  const displayName = user.user_metadata?.full_name || user.email || 'User';
+  await notifyNewSignup(user.email || '', displayName);
 
   return NextResponse.json({ ok: true, created: true });
 }

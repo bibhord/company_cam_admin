@@ -18,9 +18,13 @@ export async function POST(req: Request) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_admin')
+    .select('is_admin, is_active')
     .eq('user_id', user?.id)
     .maybeSingle();
 
-  return NextResponse.json({ success: true, isAdmin: profile?.is_admin ?? false });
+  return NextResponse.json({
+    success: true,
+    isAdmin: profile?.is_admin ?? false,
+    isActive: profile?.is_active ?? false,
+  });
 }

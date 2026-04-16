@@ -13,6 +13,8 @@ export default function MobileSignupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -56,19 +58,7 @@ export default function MobileSignupPage() {
       if (data.error) {
         setError(data.error);
       } else {
-        // Sign in immediately after signup
-        const signInRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        const signInData = await signInRes.json();
-        if (signInData.error) {
-          // Account created but auto-sign-in failed — send to login
-          router.push('/m/login');
-        } else {
-          router.push('/m');
-        }
+        setEmailSent(true);
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -171,6 +161,98 @@ export default function MobileSignupPage() {
     }
   };
 
+  const handleAppleSignUp = async () => {
+    setAppleLoading(true);
+    setError('');
+    try {
+      const isCapacitor = typeof window !== 'undefined' &&
+        !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+      const redirectUrl = isCapacitor
+        ? `${window.location.origin}/m/auth-callback`
+        : `${window.location.origin}/auth/callback?next=/m`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setAppleLoading(false);
+        return;
+      }
+      if (data?.url) {
+        if (isCapacitor) {
+          const { Browser } = await import('@capacitor/browser');
+          const { App } = await import('@capacitor/app');
+
+          let handled = false;
+
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            if (handled) return;
+            handled = true;
+
+            try { await Browser.close(); } catch {}
+            urlListener.remove();
+
+            const urlWithQuery = url.replace('#', '?');
+            const urlObj = new URL(urlWithQuery);
+
+            const code = urlObj.searchParams.get('code');
+            const accessToken = urlObj.searchParams.get('access_token');
+            const refreshToken = urlObj.searchParams.get('refresh_token');
+
+            let authenticated = false;
+            if (code) {
+              const { error: err } = await supabase.auth.exchangeCodeForSession(code);
+              if (!err) authenticated = true;
+              else setError(`Auth error: ${err.message}`);
+            } else if (accessToken && refreshToken) {
+              const { error: err } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (!err) authenticated = true;
+              else setError(`Session error: ${err.message}`);
+            } else {
+              setError(`OAuth returned no code or token. URL: ${url.substring(0, 100)}`);
+            }
+
+            if (authenticated) {
+              try { await fetch('/api/auth/ensure-profile', { method: 'POST' }); } catch {}
+              router.replace('/m');
+              return;
+            }
+            setAppleLoading(false);
+          });
+
+          const browserListener = await Browser.addListener('browserFinished', async () => {
+            await new Promise(r => setTimeout(r, 1500));
+            if (handled) return;
+            handled = true;
+            browserListener.remove();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              router.replace('/m');
+            } else {
+              setAppleLoading(false);
+            }
+          });
+
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          window.location.assign(data.url);
+        }
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setAppleLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-sm">
@@ -185,6 +267,26 @@ export default function MobileSignupPage() {
           <h1 className="text-xl font-bold text-slate-900">CaptureYourWork</h1>
           <p className="mt-1 text-sm text-slate-500">Create your account</p>
         </div>
+
+        {emailSent ? (
+          <div className="text-center space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">Check your email</h2>
+            <p className="text-sm text-slate-500">
+              We sent a verification link to <span className="font-medium text-slate-700">{email}</span>. Click the link to verify your email address.
+            </p>
+            <p className="text-xs text-slate-400">
+              After verification, your account will be reviewed and activated by an admin.
+            </p>
+            <Link href="/m/login" className="mt-4 inline-block text-sm font-semibold text-amber-600 hover:text-amber-700">
+              Back to Sign in
+            </Link>
+          </div>
+        ) : (<>
 
         {/* Google sign-up first */}
         <button
@@ -206,6 +308,25 @@ export default function MobileSignupPage() {
             </svg>
           )}
           Sign up with Google
+        </button>
+
+        {/* Apple sign-up */}
+        <button
+          onClick={handleAppleSignUp}
+          disabled={appleLoading}
+          className="mt-3 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-black py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-900 active:bg-gray-800 disabled:opacity-60"
+        >
+          {appleLoading ? (
+            <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+            </svg>
+          )}
+          Sign up with Apple
         </button>
 
         {/* Divider */}
@@ -321,6 +442,8 @@ export default function MobileSignupPage() {
         <p className="mt-6 text-center text-xs text-slate-400">
           &copy; {new Date().getFullYear()} CaptureYourWork
         </p>
+        </>
+        )}
       </div>
     </div>
   );

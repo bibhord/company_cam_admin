@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { notifyNewSignup } from '@/lib/notify-signup';
 
 export async function POST(req: Request) {
   const { email, password, first_name, last_name } = await req.json();
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
 
   const supabase = createRouteHandlerClient({ cookies: () => cookies() });
 
+  // Supabase will send a confirmation email if "Confirm email" is enabled in the dashboard
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -24,6 +26,7 @@ export async function POST(req: Request) {
         first_name: first_name || null,
         last_name: last_name || null,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com'}/m/login?verified=true`,
     },
   });
 
@@ -41,7 +44,6 @@ export async function POST(req: Request) {
         auth: { autoRefreshToken: false, persistSession: false },
       });
 
-      // Create a personal organization for the new user
       const displayName = [first_name, last_name].filter(Boolean).join(' ') || email;
       const orgName = displayName !== email
         ? `${displayName}'s (${email}) Organization`
@@ -64,15 +66,17 @@ export async function POST(req: Request) {
         last_name: last_name || null,
         role: 'admin',
         is_admin: true,
-        is_active: true,
+        is_active: false,
         onboarding_complete: false,
       });
 
       if (profileError) {
         console.error('Error creating profile:', profileError);
       }
+
+      await notifyNewSignup(email, displayName);
     }
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, email_verification_required: true });
 }

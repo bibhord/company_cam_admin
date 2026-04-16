@@ -11,6 +11,7 @@ export default function MobileLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -172,6 +173,98 @@ export default function MobileLoginPage() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setError('');
+    try {
+      const isCapacitor = typeof window !== 'undefined' &&
+        !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+      const redirectUrl = isCapacitor
+        ? `${window.location.origin}/m/auth-callback`
+        : `${window.location.origin}/auth/callback?next=/m`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setAppleLoading(false);
+        return;
+      }
+      if (data?.url) {
+        if (isCapacitor) {
+          const { Browser } = await import('@capacitor/browser');
+          const { App } = await import('@capacitor/app');
+
+          let handled = false;
+
+          const urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
+            if (handled) return;
+            handled = true;
+
+            try { await Browser.close(); } catch {}
+            urlListener.remove();
+
+            const urlWithQuery = url.replace('#', '?');
+            const urlObj = new URL(urlWithQuery);
+
+            const code = urlObj.searchParams.get('code');
+            const accessToken = urlObj.searchParams.get('access_token');
+            const refreshToken = urlObj.searchParams.get('refresh_token');
+
+            let authenticated = false;
+            if (code) {
+              const { error: err } = await supabase.auth.exchangeCodeForSession(code);
+              if (!err) authenticated = true;
+              else setError(`Auth error: ${err.message}`);
+            } else if (accessToken && refreshToken) {
+              const { error: err } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (!err) authenticated = true;
+              else setError(`Session error: ${err.message}`);
+            } else {
+              setError(`OAuth returned no code or token. URL: ${url.substring(0, 100)}`);
+            }
+
+            if (authenticated) {
+              try { await fetch('/api/auth/ensure-profile', { method: 'POST' }); } catch {}
+              router.replace('/m');
+              return;
+            }
+            setAppleLoading(false);
+          });
+
+          const browserListener = await Browser.addListener('browserFinished', async () => {
+            await new Promise(r => setTimeout(r, 1500));
+            if (handled) return;
+            handled = true;
+            browserListener.remove();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              router.replace('/m');
+            } else {
+              setAppleLoading(false);
+            }
+          });
+
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          window.location.assign(data.url);
+        }
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setAppleLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-sm">
@@ -278,6 +371,25 @@ export default function MobileLoginPage() {
             </svg>
           )}
           Continue with Google
+        </button>
+
+        {/* Apple sign-in */}
+        <button
+          onClick={handleAppleSignIn}
+          disabled={appleLoading}
+          className="mt-3 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-black py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-900 active:bg-gray-800 disabled:opacity-60"
+        >
+          {appleLoading ? (
+            <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+            </svg>
+          )}
+          Continue with Apple
         </button>
 
         <p className="mt-6 text-center text-sm text-slate-500">
