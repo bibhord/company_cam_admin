@@ -68,7 +68,6 @@ export async function POST() {
     return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
   }
 
-  const displayName = user.user_metadata?.full_name || user.email || 'User';
   await notifyNewSignup(user.email || '', displayName);
 
   return NextResponse.json({ ok: true, created: true });
