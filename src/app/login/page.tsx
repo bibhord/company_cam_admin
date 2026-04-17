@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -59,6 +60,26 @@ export default function LoginPage() {
     } catch {
       setError('Something went wrong. Please try again.');
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setError('');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setAppleLoading(false);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setAppleLoading(false);
     }
   };
 
@@ -227,6 +248,25 @@ export default function LoginPage() {
               </svg>
             )}
             Continue with Google
+          </button>
+
+          {/* Apple sign-in */}
+          <button
+            onClick={handleAppleSignIn}
+            disabled={appleLoading}
+            className="mt-3 flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-black py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-900 active:bg-gray-800 disabled:opacity-60"
+          >
+            {appleLoading ? (
+              <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+              </svg>
+            )}
+            Continue with Apple
           </button>
 
           <p className="mt-6 text-center text-sm text-slate-500">
