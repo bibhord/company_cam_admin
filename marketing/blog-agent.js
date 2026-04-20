@@ -211,6 +211,9 @@ function buildPage(topic, articleHtml, publishedDate) {
   <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureYourWork. All rights reserved.</p>
 </footer>
 
+<!-- Crisp Chat -->
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="51fc2e33-c7e4-4f06-8e74-937fab1f1b1b";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+
 </body>
 </html>`;
 }
@@ -279,6 +282,8 @@ ${publishedTopics.length > 0
   <p><a href="${SITE_URL}/">Home</a><a href="${SITE_URL}/blog/">Blog</a><a href="${SITE_URL}/#pricing">Pricing</a><a href="mailto:hello@captureyourwork.com">Contact</a></p>
   <p style="margin-top:0.75rem">&copy; ${new Date().getFullYear()} CaptureYourWork. All rights reserved.</p>
 </footer>
+<!-- Crisp Chat -->
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="51fc2e33-c7e4-4f06-8e74-937fab1f1b1b";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </body>
 </html>`;
 }
