@@ -7,7 +7,6 @@ import { ServiceWorkerRegister } from './components/service-worker-register';
 import { VersionCheck } from './components/version-check';
 import { NotificationPrompt } from './components/notification-prompt';
 import { LocaleWrapper } from './components/locale-wrapper';
-import { CrispMobileManager } from './components/crisp-mobile-manager';
 
 interface ProfileRecord {
   org_id: string | null;
@@ -99,7 +98,6 @@ export default async function MobileLayout({
       <VersionCheck />
       <NotificationPrompt />
       <ServiceWorkerRegister />
-      <CrispMobileManager />
       <main className="flex-1 pb-16">
         {children}
       </main>

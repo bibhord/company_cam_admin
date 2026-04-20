@@ -1,40 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
-
 declare global {
   interface Window {
     $crisp?: unknown[];
+    CRISP_WEBSITE_ID?: string;
   }
 }
 
-export function CrispMobileManager() {
-  useEffect(() => {
-    function hide() {
-      if (window.$crisp) {
-        window.$crisp.push(['do', 'chat:hide']);
-      }
-    }
-    hide();
-    const onClosed = () => hide();
-    if (window.$crisp) {
-      window.$crisp.push(['on', 'chat:closed', onClosed]);
-    }
-
-    const interval = setInterval(hide, 1000);
-    const stopPolling = setTimeout(() => clearInterval(interval), 10_000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(stopPolling);
-    };
-  }, []);
-
-  return null;
-}
+const CRISP_WEBSITE_ID = '51fc2e33-c7e4-4f06-8e74-937fab1f1b1b';
 
 export function openCrispChat() {
-  if (typeof window === 'undefined' || !window.$crisp) return;
+  if (typeof window === 'undefined') return;
+
+  if (!window.$crisp) {
+    window.$crisp = [];
+    window.CRISP_WEBSITE_ID = CRISP_WEBSITE_ID;
+    const script = document.createElement('script');
+    script.src = 'https://client.crisp.chat/l.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
   window.$crisp.push(['do', 'chat:show']);
   window.$crisp.push(['do', 'chat:open']);
 }
