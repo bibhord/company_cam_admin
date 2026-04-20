@@ -1,9 +1,9 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { checkFeature } from '@/lib/gate';
 import { generateReportPdf } from '@/lib/pdf';
+import { r2SignedUrl, r2Upload } from '@/lib/r2';
 
 interface ProfileRecord {
   org_id: string;
@@ -96,13 +96,16 @@ export async function POST(
   const photosWithUrls = await Promise.all(
     (items as ItemRecord[]).map(async (item) => {
       const photo = Array.isArray(item.photos) ? item.photos[0] : item.photos;
-      const { data: signed } = await supabase.storage
-        .from('photos')
-        .createSignedUrl(photo.object_key, 3600);
+      let signedUrl = '';
+      try {
+        signedUrl = await r2SignedUrl(photo.object_key, 3600);
+      } catch (err) {
+        console.error('[publish] signed URL generation failed', err);
+      }
       return {
         name: photo.name,
         object_key: photo.object_key,
-        signedUrl: signed?.signedUrl ?? '',
+        signedUrl,
         caption: item.caption,
         lat: photo.lat,
         lon: photo.lon,
@@ -123,20 +126,11 @@ export async function POST(
     photos: photosWithUrls,
   });
 
-  // Upload with service role (bypasses storage RLS)
-  const svc = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-
   const pdfKey = `${profile.org_id}/reports/${reportId}.pdf`;
-  const { error: uploadError } = await svc.storage
-    .from('photos')
-    .upload(pdfKey, pdfBytes, { contentType: 'application/pdf', upsert: true });
-
-  if (uploadError) {
-    console.error('[publish] storage upload failed', uploadError);
+  try {
+    await r2Upload(pdfKey, Buffer.from(pdfBytes), 'application/pdf');
+  } catch (uploadError) {
+    console.error('[publish] R2 upload failed', uploadError);
     return NextResponse.json({ error: 'Failed to store PDF.' }, { status: 500 });
   }
 
@@ -147,9 +141,7 @@ export async function POST(
     .eq('id', reportId);
 
   // Return 1-hour signed download URL
-  const { data: download } = await svc.storage
-    .from('photos')
-    .createSignedUrl(pdfKey, 3600);
+  const url = await r2SignedUrl(pdfKey, 3600);
 
-  return NextResponse.json({ url: download?.signedUrl });
+  return NextResponse.json({ url });
 }

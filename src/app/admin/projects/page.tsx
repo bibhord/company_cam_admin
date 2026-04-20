@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { PhotoCard } from '../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../types';
+import { r2SignedUrl } from '@/lib/r2';
 
 interface ProfileRecord {
   org_id: string;
@@ -107,14 +108,12 @@ export default async function ProjectsPage() {
 
   const projectRecords = (projects ?? []) as ProjectRecord[];
   const rawPhotoRecords = (photos ?? []) as PhotoRecord[];
-  const storage = supabase.storage.from('photos');
   const photoRecords = await Promise.all(
     rawPhotoRecords.map(async (photo) => {
       if (!photo.object_key) return { ...photo, signedUrl: null };
       try {
-        const { data: signed, error: signedError } = await storage.createSignedUrl(photo.object_key, 60 * 60);
-        if (signedError) return { ...photo, signedUrl: null };
-        return { ...photo, signedUrl: signed?.signedUrl ?? null };
+        const signedUrl = await r2SignedUrl(photo.object_key, 60 * 60);
+        return { ...photo, signedUrl };
       } catch {
         return { ...photo, signedUrl: null };
       }

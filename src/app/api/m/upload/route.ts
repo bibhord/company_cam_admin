@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse, after } from 'next/server';
 import { processWatermark } from '@/lib/watermark';
 import { fireReportNudge } from '@/lib/nudge';
+import { r2Upload } from '@/lib/r2';
 
 interface ProfileRecord {
   org_id: string;
@@ -60,16 +61,12 @@ export async function POST(request: NextRequest) {
   const folder = projectId || 'unassigned';
   const objectKey = `${profile.org_id}/${folder}/${timestamp}_${filename}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from('photos')
-    .upload(objectKey, file, {
-      contentType: file.type,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error('Error uploading file to storage:', uploadError);
-    return NextResponse.json({ error: `Unable to upload file: ${uploadError.message}` }, { status: 500 });
+  try {
+    await r2Upload(objectKey, file, file.type);
+  } catch (uploadError) {
+    console.error('Error uploading file to R2:', uploadError);
+    const message = uploadError instanceof Error ? uploadError.message : 'unknown';
+    return NextResponse.json({ error: `Unable to upload file: ${message}` }, { status: 500 });
   }
 
   const { data: photo, error: insertError } = await supabase

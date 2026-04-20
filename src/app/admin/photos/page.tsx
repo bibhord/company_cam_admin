@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import type { PhotoRecord, ProjectRecord } from '../types';
 import { PhotosClient } from './photos-client';
+import { r2SignedUrl } from '@/lib/r2';
 
 interface ProfileRecord {
   org_id: string;
@@ -95,20 +96,14 @@ export default async function PhotosPage() {
   }
 
   const rawPhotoRecords = (photos ?? []) as PhotoRecord[];
-  const storage = supabase.storage.from('photos');
   const enrichedPhotos = await Promise.all(
     rawPhotoRecords.map(async (photo) => {
       if (!photo.object_key) {
         return { ...photo, signedUrl: null };
       }
-
       try {
-        const { data: signed, error: signedError } = await storage.createSignedUrl(photo.object_key, 60 * 60);
-        if (signedError) {
-          console.error(`Error generating signed URL for photo ${photo.id}:`, signedError);
-          return { ...photo, signedUrl: null };
-        }
-        return { ...photo, signedUrl: signed?.signedUrl ?? null };
+        const signedUrl = await r2SignedUrl(photo.object_key, 60 * 60);
+        return { ...photo, signedUrl };
       } catch (error) {
         console.error(`Unexpected error generating signed URL for photo ${photo.id}:`, error);
         return { ...photo, signedUrl: null };

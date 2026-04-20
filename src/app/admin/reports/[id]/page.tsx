@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { ReportBuilder, type BuilderPhoto } from './report-builder';
+import { r2SignedUrl } from '@/lib/r2';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -81,10 +82,12 @@ export default async function ReportDetailPage({ params }: RouteParams) {
   const projectPhotos: BuilderPhoto[] = await Promise.all(
     photoRows.map(async (photo) => {
       if (!photo.object_key) return { ...photo, signedUrl: null };
-      const { data } = await supabase.storage
-        .from('photos')
-        .createSignedUrl(photo.object_key, 216000); // 60 hours
-      return { ...photo, signedUrl: data?.signedUrl ?? null };
+      try {
+        const signedUrl = await r2SignedUrl(photo.object_key, 216000); // 60 hours
+        return { ...photo, signedUrl };
+      } catch {
+        return { ...photo, signedUrl: null };
+      }
     })
   );
 

@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { r2SignedUrl } from '@/lib/r2';
 
 type OrgRole = 'admin' | 'manager' | 'standard' | 'restricted';
 
@@ -76,15 +77,18 @@ export async function GET(
 
   const photosWithUrls = await Promise.all(
     (photos ?? []).map(async (photo) => {
-      const { data: signedUrlData } = await supabase.storage
-        .from('photos')
-        .createSignedUrl(photo.object_key, 3600);
+      let signedUrl: string | null = null;
+      try {
+        signedUrl = await r2SignedUrl(photo.object_key, 3600);
+      } catch (err) {
+        console.error('Error generating signed URL for photo', photo.id, err);
+      }
       return {
         id: photo.id,
         name: photo.name,
         notes: photo.notes,
         created_at: photo.created_at,
-        signed_url: signedUrlData?.signedUrl ?? null,
+        signed_url: signedUrl,
       };
     })
   );

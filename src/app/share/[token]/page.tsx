@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
+import { r2SignedUrl } from '@/lib/r2';
 
 interface RouteParams {
   params: Promise<{ token: string }>;
@@ -56,10 +57,12 @@ export default async function GuestProjectView({ params }: RouteParams) {
   // Generate signed URLs (1 hour)
   const photosWithUrls = await Promise.all(
     photos.map(async (photo) => {
-      const { data } = await svc.storage
-        .from('photos')
-        .createSignedUrl(photo.object_key, 3600);
-      return { ...photo, signedUrl: data?.signedUrl ?? null };
+      try {
+        const signedUrl = await r2SignedUrl(photo.object_key, 3600);
+        return { ...photo, signedUrl };
+      } catch {
+        return { ...photo, signedUrl: null };
+      }
     })
   );
 

@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
+import { r2Download, r2Upload } from './r2';
 
 export interface WatermarkJob {
   photoId: string;
@@ -31,14 +32,14 @@ export async function processWatermark(job: WatermarkJob): Promise<void> {
 
   if (!orgPlan || orgPlan.effective_plan === 'basic') return;
 
-  // Download original from storage
-  const { data: blob, error: dlErr } = await svc.storage.from('photos').download(objectKey);
-  if (dlErr || !blob) {
+  // Download original from R2
+  let buffer: Buffer;
+  try {
+    buffer = await r2Download(objectKey);
+  } catch (dlErr) {
     console.error('[watermark] download failed', dlErr);
     return;
   }
-
-  const buffer = Buffer.from(await blob.arrayBuffer());
 
   // Build overlay text
   const ts = new Date(createdAt).toLocaleString('en-US', { timeZone: 'UTC' });
@@ -74,11 +75,9 @@ export async function processWatermark(job: WatermarkJob): Promise<void> {
 
   // Upload watermarked version alongside original (wm/ prefix)
   const wmKey = `wm/${objectKey}`;
-  const { error: upErr } = await svc.storage
-    .from('photos')
-    .upload(wmKey, watermarked, { contentType: 'image/jpeg', upsert: true });
-
-  if (upErr) {
+  try {
+    await r2Upload(wmKey, watermarked, 'image/jpeg');
+  } catch (upErr) {
     console.error('[watermark] upload failed', upErr);
     return;
   }

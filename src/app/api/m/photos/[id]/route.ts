@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { r2Delete } from '@/lib/r2';
 
 interface ProfileRecord {
   org_id: string;
@@ -100,8 +101,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'Photo not found.' }, { status: 404 });
   }
 
-  // Delete from storage
-  await supabase.storage.from('photos').remove([photo.object_key]);
+  // Delete from R2
+  try {
+    await r2Delete(photo.object_key);
+  } catch (err) {
+    console.error('Error deleting object from R2:', err);
+  }
 
   // Delete from database
   const { error: deleteError } = await supabase
