@@ -152,7 +152,39 @@ function patch(html) {
     out = out.replace('</head>', '  <meta name="robots" content="index, follow" />\n</head>');
   }
 
-  // ── 11. Inject Crisp chat widget ─────────────────────────────────────────
+  // ── 11. Force white text on sidebar preview and "Now available" pill ─────
+  // "Now available on iOS & Web" pill
+  out = out.replace(
+    /<span class="text-brand-300 text-xs font-medium">Now available on iOS &amp; Web<\/span>/,
+    '<span class="text-white text-xs font-medium">Now available on iOS &amp; Web</span>'
+  );
+  // Sidebar labels in the dashboard preview image
+  out = out.replace(
+    /<span class="text-\[10px\] text-brand-400 font-semibold truncate">CaptureWork<\/span>/,
+    '<span class="text-[10px] text-white font-semibold truncate">CaptureWork</span>'
+  );
+  out = out.replace(
+    /<span class="text-\[9px\] text-slate-400">Dashboard<\/span>/,
+    '<span class="text-[9px] text-white">Dashboard</span>'
+  );
+  out = out.replace(
+    /<span class="text-\[9px\] text-brand-400">Projects<\/span>/,
+    '<span class="text-[9px] text-white">Projects</span>'
+  );
+  out = out.replace(
+    /<span class="text-\[9px\] text-slate-400">Photos<\/span>/,
+    '<span class="text-[9px] text-white">Photos</span>'
+  );
+  out = out.replace(
+    /<span class="text-\[9px\] text-slate-400">Reports<\/span>/,
+    '<span class="text-[9px] text-white">Reports</span>'
+  );
+  out = out.replace(
+    /<span class="text-\[9px\] text-slate-400">Team<\/span>/,
+    '<span class="text-[9px] text-white">Team</span>'
+  );
+
+  // ── 12. Inject Crisp chat widget ─────────────────────────────────────────
   const crispScript = `
   <!-- Crisp Chat -->
   <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="51fc2e33-c7e4-4f06-8e74-937fab1f1b1b";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>`;
