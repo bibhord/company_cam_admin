@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from './components/service-worker-register';
 import { VersionCheck } from './components/version-check';
 import { NotificationPrompt } from './components/notification-prompt';
 import { LocaleWrapper } from './components/locale-wrapper';
+import { TrialBanner } from '@/components/trial-banner';
 
 interface ProfileRecord {
   org_id: string | null;
@@ -95,6 +96,7 @@ export default async function MobileLayout({
   return (
     <LocaleWrapper locale={locale}>
     <div className="flex min-h-screen flex-col bg-slate-50">
+      {profile?.org_id && <TrialBanner orgId={profile.org_id} upgradeHref="/m/upgrade" />}
       <VersionCheck />
       <NotificationPrompt />
       <ServiceWorkerRegister />

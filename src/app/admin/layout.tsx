@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SidebarNav } from './components/sidebar-nav';
 import { AccountMenu } from './components/account-menu';
+import { TrialBanner } from '@/components/trial-banner';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,6 +139,7 @@ export default async function AdminLayout({
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
+          {profile?.org_id && <TrialBanner orgId={profile.org_id} upgradeHref="/admin/upgrade" />}
           {/* Mobile header */}
           <div className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
             <Link href="/admin/projects" className="flex items-center gap-2">

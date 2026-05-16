@@ -4,6 +4,7 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { processWatermark } from '@/lib/watermark';
 import { fireReportNudge } from '@/lib/nudge';
 import { r2Upload } from '@/lib/r2';
+import { checkUploadAllowed } from '@/lib/usage';
 
 interface ProfileRecord {
   org_id: string;
@@ -35,6 +36,15 @@ export async function POST(request: NextRequest) {
   if (profileError || !profile) {
     console.error('Error loading profile in m/upload route:', profileError);
     return NextResponse.json({ error: 'Unable to load profile.' }, { status: 500 });
+  }
+
+  const { allowed, reason } = await checkUploadAllowed(profile.org_id);
+  if (!allowed) {
+    const message =
+      reason === 'trial_expired'
+        ? 'Your free trial has expired. Upgrade to continue uploading.'
+        : 'You have reached your photo limit for this plan. Upgrade to upload more.';
+    return NextResponse.json({ error: message, reason }, { status: 402 });
   }
 
   let formData: FormData;
