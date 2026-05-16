@@ -27,25 +27,6 @@ const navSections = [
     items: [
       { label: 'Projects', href: '/admin/projects', icon: 'projects' },
       { label: 'Photos', href: '/admin/photos', icon: 'photos' },
-      { label: 'Users', href: '/admin/users', icon: 'users' },
-      { label: 'Groups', href: '/admin/groups', icon: 'groups' },
-      { label: 'Reports', href: '/admin/reports', icon: 'reports' },
-      { label: 'Checklists', href: '/admin/checklists', icon: 'checklists' },
-      { label: 'Map', href: '/admin/map', icon: 'map' },
-    ],
-  },
-  {
-    label: 'Marketing',
-    items: [
-      { label: 'Reviews', href: '/admin/reviews', icon: 'reviews' },
-      { label: 'Portfolio', href: '/admin/portfolio', icon: 'portfolio' },
-    ],
-  },
-  {
-    label: 'Resources',
-    items: [
-      { label: 'Integrations', href: '/admin/integrations', icon: 'integrations' },
-      { label: 'Templates', href: '/admin/templates', icon: 'templates' },
     ],
   },
 ];
