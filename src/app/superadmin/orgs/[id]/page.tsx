@@ -18,6 +18,7 @@ interface OrgRecord {
   trial_ends_at: string;
   created_at: string;
   stripe_subscription_id: string | null;
+  is_demo: boolean;
 }
 
 interface UserRow {
@@ -42,7 +43,7 @@ export default async function OrgDetailPage({ params }: RouteParams) {
 
   const { data: org } = await svc
     .from('organizations')
-    .select('id, name, status, plan, trial_ends_at, created_at, stripe_subscription_id')
+    .select('id, name, status, plan, trial_ends_at, created_at, stripe_subscription_id, is_demo')
     .eq('id', orgId)
     .maybeSingle<OrgRecord>();
 
@@ -89,12 +90,17 @@ export default async function OrgDetailPage({ params }: RouteParams) {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">{org.name}</h1>
+          <h1 className="text-2xl font-bold text-slate-100">
+            {org.name}
+            {org.is_demo && (
+              <span className="ml-3 rounded-full bg-violet-500/20 px-2 py-0.5 align-middle text-xs font-semibold text-violet-400">demo</span>
+            )}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
             Signed up {new Date(org.created_at).toLocaleDateString()}
           </p>
         </div>
-        <OrgActions orgId={org.id} currentStatus={org.status} currentPlan={org.plan} />
+        <OrgActions orgId={org.id} currentStatus={org.status} currentPlan={org.plan} isDemo={org.is_demo} />
       </div>
 
       {/* Stats row */}

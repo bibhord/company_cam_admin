@@ -10,14 +10,15 @@ interface OrgActionsProps {
   orgId: string;
   currentStatus: string;
   currentPlan: string;
+  isDemo: boolean;
 }
 
-export function OrgActions({ orgId, currentStatus, currentPlan }: OrgActionsProps) {
+export function OrgActions({ orgId, currentStatus, currentPlan, isDemo }: OrgActionsProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function update(payload: { status?: OrgStatus; plan?: OrgPlan }) {
+  async function update(payload: { status?: OrgStatus; plan?: OrgPlan; is_demo?: boolean }) {
     setBusy(true);
     setError(null);
     try {
@@ -90,6 +91,19 @@ export function OrgActions({ orgId, currentStatus, currentPlan }: OrgActionsProp
           </button>
         ))}
       </div>
+
+      {/* Demo toggle */}
+      <button
+        onClick={() => update({ is_demo: !isDemo })}
+        disabled={busy}
+        className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+          isDemo
+            ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
+            : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+        } disabled:opacity-50`}
+      >
+        {isDemo ? '✓ Demo org' : 'Mark as demo'}
+      </button>
     </div>
   );
 }

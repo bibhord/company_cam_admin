@@ -10,6 +10,7 @@ interface OrgRow {
   plan: string;
   trial_ends_at: string;
   created_at: string;
+  is_demo: boolean;
   user_count: number;
 }
 
@@ -25,20 +26,26 @@ const PLAN_STYLES: Record<string, string> = {
   pro: 'bg-indigo-500/20 text-indigo-400',
 };
 
-export default async function OrgsPage() {
+export default async function OrgsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ demo?: string }>;
+}) {
+  const { demo } = await searchParams;
+  const showDemo = demo === 'show' || demo === 'only';
+  const demoOnly = demo === 'only';
+
   const svc = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Load orgs + user count via subquery
   const { data: orgs } = await svc
     .from('organizations')
-    .select('id, name, status, plan, trial_ends_at, created_at')
+    .select('id, name, status, plan, trial_ends_at, created_at, is_demo')
     .order('created_at', { ascending: false });
 
-  // Get user counts per org
   const { data: profileCounts } = await svc
     .from('profiles')
     .select('org_id');
@@ -48,23 +55,41 @@ export default async function OrgsPage() {
     countMap[p.org_id] = (countMap[p.org_id] ?? 0) + 1;
   }
 
-  const rows: OrgRow[] = (orgs ?? []).map((o) => ({
+  const allRows: OrgRow[] = (orgs ?? []).map((o) => ({
     ...o,
     user_count: countMap[o.id] ?? 0,
   }));
+
+  const rows = demoOnly
+    ? allRows.filter((o) => o.is_demo)
+    : showDemo
+      ? allRows
+      : allRows.filter((o) => !o.is_demo);
+
+  const demoCount = allRows.filter((o) => o.is_demo).length;
 
   const pending = rows.filter((o) => o.status === 'pending');
   const rest = rows.filter((o) => o.status !== 'pending');
 
   const sections = [
     ...(pending.length > 0 ? [{ label: `Pending Approval (${pending.length})`, orgs: pending }] : []),
-    { label: 'All Organizations', orgs: rest },
+    { label: demoOnly ? 'Demo Organizations' : 'All Organizations', orgs: rest },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Organizations</h1>
-      <p className="mt-1 text-sm text-slate-500">{rows.length} total</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Organizations</h1>
+          <p className="mt-1 text-sm text-slate-500">{rows.length} shown · {allRows.length} total · {demoCount} demo</p>
+        </div>
+
+        <div className="flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1">
+          <FilterTab href="/superadmin/orgs" label="Real" active={!showDemo} />
+          <FilterTab href="/superadmin/orgs?demo=show" label="All" active={showDemo && !demoOnly} />
+          <FilterTab href="/superadmin/orgs?demo=only" label="Demo" active={demoOnly} />
+        </div>
+      </div>
 
       {sections.map((section) => (
         <div key={section.label} className="mt-8">
@@ -86,7 +111,12 @@ export default async function OrgsPage() {
               <tbody className="divide-y divide-slate-800">
                 {section.orgs.map((org) => (
                   <tr key={org.id} className="hover:bg-slate-800/50">
-                    <td className="px-5 py-3 font-medium text-slate-100">{org.name}</td>
+                    <td className="px-5 py-3 font-medium text-slate-100">
+                      {org.name}
+                      {org.is_demo && (
+                        <span className="ml-2 rounded-full bg-violet-500/20 px-1.5 py-0.5 text-xs text-violet-400">demo</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLES[org.status] ?? ''}`}>
                         {org.status}
@@ -117,5 +147,18 @@ export default async function OrgsPage() {
         </div>
       ))}
     </div>
+  );
+}
+
+function FilterTab({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`rounded-md px-3 py-1 text-xs font-semibold transition ${
+        active ? 'bg-slate-800 text-slate-100' : 'text-slate-500 hover:text-slate-300'
+      }`}
+    >
+      {label}
+    </Link>
   );
 }

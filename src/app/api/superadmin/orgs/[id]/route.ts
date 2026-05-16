@@ -32,8 +32,8 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
 
-  const allowed = ['status', 'plan'];
-  const updates: Record<string, string> = {};
+  const allowed = ['status', 'plan', 'is_demo'];
+  const updates: Record<string, string | boolean> = {};
   for (const key of allowed) {
     if (body[key] !== undefined) updates[key] = body[key];
   }

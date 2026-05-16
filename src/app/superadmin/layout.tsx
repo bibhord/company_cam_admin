@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic';
 const navItems = [
   { label: 'Dashboard', href: '/superadmin' },
   { label: 'Organizations', href: '/superadmin/orgs' },
+  { label: 'Projects', href: '/superadmin/projects' },
+  { label: 'Photos', href: '/superadmin/photos' },
 ];
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
