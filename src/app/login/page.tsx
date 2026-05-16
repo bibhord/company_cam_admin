@@ -6,6 +6,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Turnstile } from '@/components/turnstile';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,8 +15,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,7 +29,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, captchaToken }),
       });
 
       const data = await res.json();
@@ -199,9 +202,11 @@ export default function LoginPage() {
               </div>
             )}
 
+            {captchaEnabled && <Turnstile onVerify={setCaptchaToken} />}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (captchaEnabled && !captchaToken)}
               className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm shadow-amber-500/20 cursor-pointer"
             >
               {loading ? (

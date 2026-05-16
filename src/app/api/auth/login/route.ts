@@ -4,12 +4,18 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  const { email, password, captchaToken } = await req.json();
+
+  if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+    return NextResponse.json({ error: 'Please complete the CAPTCHA.' }, { status: 400 });
+  }
+
   const supabase = createRouteHandlerClient({ cookies: () => cookies() });
 
   const { data: { user }, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: { captchaToken },
   });
 
   if (error) {
