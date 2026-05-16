@@ -29,6 +29,12 @@ const navSections = [
       { label: 'Photos', href: '/admin/photos', icon: 'photos' },
     ],
   },
+  {
+    label: 'Marketing',
+    items: [
+      { label: 'Portfolio', href: '/admin/portfolio', icon: 'portfolio' },
+    ],
+  },
 ];
 
 export default async function AdminLayout({

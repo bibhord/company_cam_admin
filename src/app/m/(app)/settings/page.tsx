@@ -245,6 +245,18 @@ export default function SettingsPage() {
               </svg>
             </Link>
           ))}
+          <Link
+            href="/m/website"
+            className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3.5 text-left active:bg-slate-50"
+          >
+            <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 18c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 0a8.997 8.997 0 0 0-7.843 4.582M12 3a8.997 8.997 0 0 1 7.843 4.582m0 0A11.96 11.96 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A11.96 11.96 0 0 1 22 14.999m0 0a11.96 11.96 0 0 1-2.157 7.418M2 14.999a11.96 11.96 0 0 1 2.157-7.418" />
+            </svg>
+            <span className="flex-1 text-sm text-slate-900">Public website</span>
+            <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </Link>
           <button
             onClick={openCrispChat}
             className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3.5 text-left active:bg-slate-50"
