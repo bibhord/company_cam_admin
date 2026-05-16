@@ -1,9 +1,9 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Turnstile } from '@/components/turnstile';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -14,8 +14,10 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
-  const router = useRouter();
+  const [emailSent, setEmailSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const supabase = createClientComponentClient();
+  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,25 +28,20 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName }),
+        body: JSON.stringify({
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          captchaToken,
+        }),
       });
 
       const data = await res.json();
       if (data.error) {
         setError(data.error);
       } else {
-        // Sign in immediately after signup
-        const signInRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        const signInData = await signInRes.json();
-        if (signInData.error) {
-          router.push('/login');
-        } else {
-          router.push('/admin');
-        }
+        setEmailSent(true);
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -155,6 +152,26 @@ export default function SignupPage() {
             <span className="text-slate-900 text-lg font-semibold tracking-tight">CaptureYourWork</span>
           </div>
 
+          {emailSent ? (
+            <div className="text-center space-y-4">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Check your email</h2>
+              <p className="text-sm text-slate-500">
+                We sent a verification link to <span className="font-medium text-slate-700">{email}</span>. Click the link to verify your email address.
+              </p>
+              <p className="text-xs text-slate-400">
+                After verification, your account will be reviewed and activated by an admin.
+              </p>
+              <Link href="/login" className="mt-4 inline-block text-sm font-semibold text-amber-600 hover:text-amber-700">
+                Back to Sign in
+              </Link>
+            </div>
+          ) : (
+          <>
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-1">Create your account</h2>
             <p className="text-slate-500 text-sm">Get started for free</p>
@@ -284,9 +301,11 @@ export default function SignupPage() {
               </div>
             )}
 
+            {captchaEnabled && <Turnstile onVerify={setCaptchaToken} />}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (captchaEnabled && !captchaToken)}
               className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm shadow-amber-500/20 cursor-pointer"
             >
               {loading ? (
@@ -313,6 +332,8 @@ export default function SignupPage() {
           <p className="mt-6 text-center text-xs text-slate-400">
             &copy; {new Date().getFullYear()} CaptureYourWork. All rights reserved.
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>

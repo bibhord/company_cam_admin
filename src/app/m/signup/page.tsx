@@ -4,6 +4,7 @@ import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Turnstile } from '@/components/turnstile';
 
 export default function MobileSignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -15,8 +16,10 @@ export default function MobileSignupPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   // On mount + visibility/focus, check if already authenticated.
   // Handles PWA returning after OAuth completed in Safari.
@@ -51,7 +54,13 @@ export default function MobileSignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName }),
+        body: JSON.stringify({
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          captchaToken,
+        }),
       });
 
       const data = await res.json();
@@ -413,9 +422,11 @@ export default function MobileSignupPage() {
             </div>
           )}
 
+          {captchaEnabled && <Turnstile onVerify={setCaptchaToken} />}
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (captchaEnabled && !captchaToken)}
             className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 disabled:opacity-60"
           >
             {loading ? (
