@@ -1,4 +1,4 @@
-package com.captureyourwork.app;
+package com.kumarillc.captureyourwork;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.captureyourwork.app"
+    namespace = "com.kumarillc.captureyourwork"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.captureyourwork.app"
+        applicationId "com.kumarillc.captureyourwork"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
+        versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

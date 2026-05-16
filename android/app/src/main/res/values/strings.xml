@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">CaptureYourWork</string>
     <string name="title_activity_main">CaptureYourWork</string>
-    <string name="package_name">com.captureyourwork.app</string>
-    <string name="custom_url_scheme">com.captureyourwork.app</string>
+    <string name="package_name">com.kumarillc.captureyourwork</string>
+    <string name="custom_url_scheme">com.kumarillc.captureyourwork</string>
 </resources>
