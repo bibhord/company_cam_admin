@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         last_name: last_name || null,
         role: 'admin',
         is_admin: true,
-        is_active: false,
+        is_active: true,
         onboarding_complete: false,
       });
 
