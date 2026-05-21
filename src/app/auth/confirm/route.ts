@@ -9,8 +9,14 @@ export async function GET(request: Request) {
   const type = requestUrl.searchParams.get('type') as EmailOtpType | null;
   const next = requestUrl.searchParams.get('next') ?? '/m/login?verified=true';
 
+  // Decide whether to send users to the mobile or desktop expired page
+  const isMobile = next.startsWith('/m');
+  const expiredUrl = new URL('/auth/link-expired', requestUrl.origin);
+  if (type) expiredUrl.searchParams.set('type', type);
+  if (isMobile) expiredUrl.searchParams.set('mobile', '1');
+
   if (!token_hash || !type) {
-    return NextResponse.redirect(new URL('/m/login?error=invalid_link', requestUrl.origin));
+    return NextResponse.redirect(expiredUrl);
   }
 
   const supabase = createRouteHandlerClient({ cookies: () => cookies() });
@@ -18,7 +24,7 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error('Email confirm error:', error);
-    return NextResponse.redirect(new URL(`/m/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
+    return NextResponse.redirect(expiredUrl);
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));
