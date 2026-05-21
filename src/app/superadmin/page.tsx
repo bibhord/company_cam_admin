@@ -8,6 +8,7 @@ interface OrgRow {
   name: string;
   status: string;
   plan: string;
+  is_demo: boolean;
   created_at: string;
 }
 
@@ -30,14 +31,14 @@ export default async function SuperAdminDashboard() {
 
   const { data: orgs } = await svc
     .from('organizations')
-    .select('id, name, status, plan, created_at')
+    .select('id, name, status, plan, is_demo, created_at')
     .order('created_at', { ascending: false });
 
   const allOrgs = (orgs ?? []) as OrgRow[];
 
-  const pending = allOrgs.filter((o) => o.status === 'pending');
   const active = allOrgs.filter((o) => o.status === 'active');
   const suspended = allOrgs.filter((o) => o.status === 'suspended');
+  const demo = allOrgs.filter((o) => o.is_demo);
   const trial = allOrgs.filter((o) => o.plan === 'trial');
   const pro = allOrgs.filter((o) => o.plan === 'pro');
 
@@ -50,40 +51,14 @@ export default async function SuperAdminDashboard() {
       <p className="mt-1 text-sm text-slate-500">Platform-wide overview</p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Total Orgs" value={allOrgs.length} />
-        <StatCard label="Pending Approval" value={pending.length} sub="need review" />
+        <StatCard label="Total Orgs" value={allOrgs.length - demo.length} sub="real customers" />
+        <StatCard label="Demo Orgs" value={demo.length} sub={demo.length ? 'excluded from real count' : undefined} />
         <StatCard label="Active" value={active.length} />
         <StatCard label="Suspended" value={suspended.length} />
         <StatCard label="On Trial" value={trial.length} />
         <StatCard label="Pro" value={pro.length} />
         <StatCard label="New this week" value={recentSignups.length} />
       </div>
-
-      {pending.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-amber-500">
-            Pending Approval ({pending.length})
-          </h2>
-          <div className="divide-y divide-slate-800 rounded-xl border border-amber-500/30 bg-slate-900 overflow-hidden">
-            {pending.map((org) => (
-              <div key={org.id} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-100">{org.name}</p>
-                  <p className="text-xs text-slate-500">
-                    Signed up {new Date(org.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Link
-                  href={`/superadmin/orgs/${org.id}`}
-                  className="rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600"
-                >
-                  Review
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mt-8">
         <div className="flex items-center justify-between mb-3">
