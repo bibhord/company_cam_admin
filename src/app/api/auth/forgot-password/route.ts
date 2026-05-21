@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  const { email, captchaToken } = await req.json();
+  const { email, captchaToken, mobile } = await req.json();
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
@@ -16,7 +16,8 @@ export async function POST(req: Request) {
   const supabase = createRouteHandlerClient({ cookies: () => cookies() });
 
   const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com';
-  const redirectTo = `${origin}/auth/confirm?next=/reset-password`;
+  const next = mobile ? '/m/reset-password' : '/reset-password';
+  const redirectTo = `${origin}/auth/confirm?next=${encodeURIComponent(next)}`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,

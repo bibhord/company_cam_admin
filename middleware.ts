@@ -12,7 +12,9 @@ function needsAuth(pathname: string): boolean {
   if (pathname.startsWith('/m/')) {
     return !pathname.startsWith('/m/login') &&
            !pathname.startsWith('/m/signup') &&
-           !pathname.startsWith('/m/auth-callback');
+           !pathname.startsWith('/m/auth-callback') &&
+           !pathname.startsWith('/m/forgot-password') &&
+           !pathname.startsWith('/m/reset-password');
   }
   if (pathname === '/m') return true;
   return false;

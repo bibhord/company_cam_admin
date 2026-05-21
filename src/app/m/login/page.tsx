@@ -301,9 +301,14 @@ export default function MobileLoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Password
-            </label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <Link href="/m/forgot-password" className="text-xs font-medium text-amber-600 hover:text-amber-700">
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
