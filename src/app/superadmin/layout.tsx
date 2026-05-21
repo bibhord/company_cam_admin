@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { SignOutButton } from './sign-out-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,9 +60,12 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
           <div className="absolute bottom-0 w-56 border-t border-slate-800 px-4 py-3">
             <p className="truncate text-xs text-slate-500">{name}</p>
-            <Link href="/admin" className="mt-0.5 text-xs text-amber-500 hover:text-amber-400">
-              Back to app
-            </Link>
+            <div className="mt-0.5 flex flex-col">
+              <Link href="/admin" className="text-xs text-amber-500 hover:text-amber-400">
+                Back to app
+              </Link>
+              <SignOutButton />
+            </div>
           </div>
         </aside>
 
