@@ -29,11 +29,13 @@ const PLAN_STYLES: Record<string, string> = {
 export default async function OrgsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ demo?: string }>;
+  searchParams: Promise<{ demo?: string; status?: string; plan?: string; recent?: string }>;
 }) {
-  const { demo } = await searchParams;
+  const { demo, status, plan, recent } = await searchParams;
   const showDemo = demo === 'show' || demo === 'only';
   const demoOnly = demo === 'only';
+  const recentOnly = recent === '1';
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const svc = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,11 +62,15 @@ export default async function OrgsPage({
     user_count: countMap[o.id] ?? 0,
   }));
 
-  const rows = demoOnly
+  let rows = demoOnly
     ? allRows.filter((o) => o.is_demo)
     : showDemo
       ? allRows
       : allRows.filter((o) => !o.is_demo);
+
+  if (status) rows = rows.filter((o) => o.status === status);
+  if (plan) rows = rows.filter((o) => o.plan === plan);
+  if (recentOnly) rows = rows.filter((o) => o.created_at > sevenDaysAgo);
 
   const demoCount = allRows.filter((o) => o.is_demo).length;
 

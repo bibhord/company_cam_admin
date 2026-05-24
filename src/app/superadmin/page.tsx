@@ -12,14 +12,23 @@ interface OrgRow {
   created_at: string;
 }
 
-function StatCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+function StatCard({ label, value, sub, href }: { label: string; value: number | string; sub?: string; href?: string }) {
+  const body = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
       <p className="mt-2 text-3xl font-bold text-slate-100">{value}</p>
       {sub && <p className="mt-1 text-xs text-slate-500">{sub}</p>}
-    </div>
+    </>
   );
+  const className = 'block rounded-xl border border-slate-800 bg-slate-900 p-5';
+  if (href) {
+    return (
+      <Link href={href} className={`${className} transition hover:border-slate-700 hover:bg-slate-800/60`}>
+        {body}
+      </Link>
+    );
+  }
+  return <div className={className}>{body}</div>;
 }
 
 export default async function SuperAdminDashboard() {
@@ -51,13 +60,13 @@ export default async function SuperAdminDashboard() {
       <p className="mt-1 text-sm text-slate-500">Platform-wide overview</p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Total Orgs" value={allOrgs.length - demo.length} sub="real customers" />
-        <StatCard label="Demo Orgs" value={demo.length} sub={demo.length ? 'excluded from real count' : undefined} />
-        <StatCard label="Active" value={active.length} />
-        <StatCard label="Suspended" value={suspended.length} />
-        <StatCard label="On Trial" value={trial.length} />
-        <StatCard label="Pro" value={pro.length} />
-        <StatCard label="New this week" value={recentSignups.length} />
+        <StatCard label="Total Orgs" value={allOrgs.length - demo.length} sub="real customers" href="/superadmin/orgs" />
+        <StatCard label="Demo Orgs" value={demo.length} sub={demo.length ? 'excluded from real count' : undefined} href="/superadmin/orgs?demo=only" />
+        <StatCard label="Active" value={active.length} href="/superadmin/orgs?demo=show&status=active" />
+        <StatCard label="Suspended" value={suspended.length} href="/superadmin/orgs?demo=show&status=suspended" />
+        <StatCard label="On Trial" value={trial.length} href="/superadmin/orgs?demo=show&plan=trial" />
+        <StatCard label="Pro" value={pro.length} href="/superadmin/orgs?demo=show&plan=pro" />
+        <StatCard label="New this week" value={recentSignups.length} href="/superadmin/orgs?demo=show&recent=1" />
       </div>
 
       <div className="mt-8">
