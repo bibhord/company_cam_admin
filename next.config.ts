@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
         hostname: "dkgcfmbbhhryrbchzcch.supabase.co",
         pathname: "/storage/v1/object/sign/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.r2.cloudflarestorage.com",
+      },
     ],
   },
 };
