@@ -10,9 +10,9 @@ const PAGE_SIZE = 48;
 export default async function SuperadminPhotosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ demo?: string; page?: string }>;
+  searchParams: Promise<{ demo?: string; page?: string; org?: string }>;
 }) {
-  const { demo, page } = await searchParams;
+  const { demo, page, org } = await searchParams;
   const includeDemo = demo === 'show';
   const pageNum = Math.max(1, parseInt(page ?? '1', 10) || 1);
   const offset = (pageNum - 1) * PAGE_SIZE;
@@ -32,7 +32,10 @@ export default async function SuperadminPhotosPage({
 
   const visibleOrgIds = (orgs ?? [])
     .filter((o) => includeDemo || !o.is_demo)
+    .filter((o) => !org || o.id === org)
     .map((o) => o.id);
+
+  const filterOrgName = org ? orgMap[org]?.name : null;
 
   const { data: photos, count } = await svc
     .from('photos')
@@ -57,8 +60,15 @@ export default async function SuperadminPhotosPage({
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">All Photos</h1>
+          <h1 className="text-2xl font-bold text-slate-100">
+            {filterOrgName ? `Photos · ${filterOrgName}` : 'All Photos'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">{count ?? 0} total · page {pageNum} of {totalPages}</p>
+          {filterOrgName && (
+            <Link href="/superadmin/photos" className="mt-1 inline-block text-xs text-amber-500 hover:text-amber-400">
+              ← Clear filter
+            </Link>
+          )}
         </div>
         <div className="flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1">
           <Tab href="/superadmin/photos" label="Real orgs" active={!includeDemo} />

@@ -19,9 +19,9 @@ interface ProjectRow {
 export default async function SuperadminProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ demo?: string; page?: string }>;
+  searchParams: Promise<{ demo?: string; page?: string; org?: string }>;
 }) {
-  const { demo, page } = await searchParams;
+  const { demo, page, org } = await searchParams;
   const includeDemo = demo === 'show';
   const pageNum = Math.max(1, parseInt(page ?? '1', 10) || 1);
   const offset = (pageNum - 1) * PAGE_SIZE;
@@ -41,7 +41,10 @@ export default async function SuperadminProjectsPage({
 
   const visibleOrgIds = (orgs ?? [])
     .filter((o) => includeDemo || !o.is_demo)
+    .filter((o) => !org || o.id === org)
     .map((o) => o.id);
+
+  const filterOrgName = org ? orgMap[org]?.name : null;
 
   const { data: projects, count } = await svc
     .from('projects')
@@ -73,8 +76,15 @@ export default async function SuperadminProjectsPage({
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">All Projects</h1>
+          <h1 className="text-2xl font-bold text-slate-100">
+            {filterOrgName ? `Projects · ${filterOrgName}` : 'All Projects'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">{count ?? 0} total · page {pageNum} of {totalPages}</p>
+          {filterOrgName && (
+            <Link href="/superadmin/projects" className="mt-1 inline-block text-xs text-amber-500 hover:text-amber-400">
+              ← Clear filter
+            </Link>
+          )}
         </div>
         <div className="flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1">
           <Tab href="/superadmin/projects" label="Real orgs" active={!includeDemo} />

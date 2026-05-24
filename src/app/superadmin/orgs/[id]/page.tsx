@@ -110,13 +110,13 @@ export default async function OrgDetailPage({ params }: RouteParams) {
         {trialDaysLeft !== null && (
           <InfoCard label="Trial days left" value={String(trialDaysLeft)} highlight={trialDaysLeft <= 3} />
         )}
-        <InfoCard label="Users" value={String(users.length)} />
-        <InfoCard label="Projects" value={String(projectCount ?? 0)} />
-        <InfoCard label="Photos" value={String(photoCount ?? 0)} />
+        <InfoCard label="Users" value={String(users.length)} href="#users" />
+        <InfoCard label="Projects" value={String(projectCount ?? 0)} href={`/superadmin/projects?demo=show&org=${org.id}`} />
+        <InfoCard label="Photos" value={String(photoCount ?? 0)} href={`/superadmin/photos?demo=show&org=${org.id}`} />
       </div>
 
       {/* Users table */}
-      <div className="mt-8">
+      <div id="users" className="mt-8 scroll-mt-6">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
           Users ({users.length})
         </h2>
@@ -167,11 +167,20 @@ export default async function OrgDetailPage({ params }: RouteParams) {
   );
 }
 
-function InfoCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+function InfoCard({ label, value, highlight, href }: { label: string; value: string; highlight?: boolean; href?: string }) {
+  const className = 'block rounded-lg border border-slate-800 bg-slate-900 px-4 py-3';
+  const body = (
+    <>
       <p className="text-xs text-slate-500">{label}</p>
       <p className={`mt-1 text-lg font-bold ${highlight ? 'text-amber-400' : 'text-slate-100'}`}>{value}</p>
-    </div>
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className={`${className} transition hover:border-slate-700 hover:bg-slate-800/60`}>
+        {body}
+      </Link>
+    );
+  }
+  return <div className={className}>{body}</div>;
 }
