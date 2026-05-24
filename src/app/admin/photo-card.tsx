@@ -2,10 +2,13 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type { PhotoRecord } from './types';
+import { AnnotationModal } from '@/components/annotations/annotation-modal';
+import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
+import { EMPTY_DOC, type AnnotationDoc } from '@/lib/annotations';
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString(undefined, {
@@ -33,6 +36,18 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [annotationOpen, setAnnotationOpen] = useState(false);
+  const [annotationDoc, setAnnotationDoc] = useState<AnnotationDoc>(EMPTY_DOC);
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/photos/${photo.id}/annotations`)
+      .then((r) => r.json())
+      .then((res) => { if (!cancelled && res?.data) setAnnotationDoc(res.data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [photo.id, annotationOpen]);
 
   const statusLabel = useMemo(() => formatStatus(photo.upload_status || photo.status || 'unknown'), [
     photo.upload_status,
@@ -106,13 +121,19 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
       {/* Image */}
       <div className="relative h-44 w-full bg-slate-100">
         {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt={photo.name || 'Project photo'}
-            fill
-            sizes="(min-width: 1280px) 320px, (min-width: 640px) 50vw, 100vw"
-            className="object-cover"
-          />
+          <>
+            <Image
+              src={imageSrc}
+              alt={photo.name || 'Project photo'}
+              fill
+              sizes="(min-width: 1280px) 320px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+              onLoadingComplete={(el) => setNatural({ w: el.naturalWidth, h: el.naturalHeight })}
+            />
+            {natural && annotationDoc.shapes.length > 0 && (
+              <AnnotationOverlay doc={annotationDoc} naturalWidth={natural.w} naturalHeight={natural.h} />
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center">
             <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
@@ -210,15 +231,35 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
             </div>
           </form>
         ) : canEdit ? (
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="mt-auto pt-3 text-xs font-medium text-amber-600 hover:text-amber-700 transition text-left cursor-pointer"
-          >
-            Edit details
-          </button>
+          <div className="mt-auto flex items-center gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="text-xs font-medium text-amber-600 hover:text-amber-700 transition cursor-pointer"
+            >
+              Edit details
+            </button>
+            {imageSrc && (
+              <button
+                type="button"
+                onClick={() => setAnnotationOpen(true)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              >
+                Annotate
+              </button>
+            )}
+          </div>
         ) : null}
       </div>
+
+      {canEdit && imageSrc && (
+        <AnnotationModal
+          photoId={photo.id}
+          imageUrl={imageSrc}
+          open={annotationOpen}
+          onClose={() => setAnnotationOpen(false)}
+        />
+      )}
     </article>
   );
 }
