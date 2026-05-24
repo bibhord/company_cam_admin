@@ -60,6 +60,7 @@ export default function MobileSignupPage() {
           first_name: firstName,
           last_name: lastName,
           captchaToken,
+          source: 'mobile',
         }),
       });
 

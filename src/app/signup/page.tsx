@@ -34,6 +34,7 @@ export default function SignupPage() {
           first_name: firstName,
           last_name: lastName,
           captchaToken,
+          source: 'web',
         }),
       });
 

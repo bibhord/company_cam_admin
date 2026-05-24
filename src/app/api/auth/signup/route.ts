@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { notifyNewSignup } from '@/lib/notify-signup';
 
 export async function POST(req: Request) {
-  const { email, password, first_name, last_name, captchaToken } = await req.json();
+  const { email, password, first_name, last_name, captchaToken, source } = await req.json();
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         first_name: first_name || null,
         last_name: last_name || null,
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com'}/m/login?verified=true`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com'}${source === 'web' ? '/login' : '/m/login'}?verified=true`,
       captchaToken,
     },
   });
