@@ -16,7 +16,8 @@ export default function MobileLoginPage() {
   const [captchaToken, setCaptchaToken] = useState('');
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const isDev = process.env.NODE_ENV !== 'production';
+  const captchaEnabled = !isDev && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   // On mount + visibility change, check if user is already authenticated.
   // This handles: PWA returning after OAuth in Safari, or user navigating
@@ -57,10 +58,12 @@ export default function MobileLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const endpoint = isDev ? '/api/dev/login' : '/api/auth/login';
+      const body = isDev ? { email } : { email, password, captchaToken };
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();

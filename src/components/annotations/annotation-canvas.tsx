@@ -24,7 +24,9 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
 
-  // Load the image into a HTMLImageElement so Konva can render it.
+  // Load the image into a HTMLImageElement so Konva can render it. Requires
+  // CORS on the R2 bucket so the canvas stays untainted (needed if we ever
+  // export the canvas as PNG/PDF).
   useEffect(() => {
     const el = new window.Image();
     el.crossOrigin = 'anonymous';

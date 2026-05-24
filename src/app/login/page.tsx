@@ -18,7 +18,8 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState('');
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const isDev = process.env.NODE_ENV !== 'production';
+  const captchaEnabled = !isDev && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,10 +27,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const endpoint = isDev ? '/api/dev/login' : '/api/auth/login';
+      const body = isDev ? { email } : { email, password, captchaToken };
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
