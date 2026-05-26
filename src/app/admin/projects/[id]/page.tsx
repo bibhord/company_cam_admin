@@ -271,38 +271,40 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
   const albums = (albumRows ?? []) as AlbumRow[];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-10">
+    <div className="min-h-screen bg-gray-50 px-4 py-5 lg:p-10">
       <div className="mx-auto max-w-5xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">
-              <Link href="/admin" className="text-indigo-600 hover:text-indigo-700">
-                ← Back to dashboard
-              </Link>
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-gray-900">{project.name ?? 'Untitled Project'}</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Created on {formatDate(project.created_at)} by {project.created_by ?? 'Unknown user'}
-            </p>
+        <header className="mb-5 lg:mb-8">
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            <Link href="/admin/projects" className="text-indigo-600 hover:text-indigo-700">
+              ← Back to projects
+            </Link>
+          </p>
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 lg:text-3xl">{project.name ?? 'Untitled Project'}</h1>
+              <p className="mt-1 text-xs text-gray-600 lg:mt-2 lg:text-sm">
+                Created on {formatDate(project.created_at)}
+              </p>
+            </div>
+            {canEdit && <ShareProjectButton projectId={project.id} />}
           </div>
-          {canEdit && <ShareProjectButton projectId={project.id} />}
         </header>
 
         {photoRecords.length === 0 ? (
-          <div className="rounded-xl bg-white p-8 text-center text-gray-600 shadow-sm">
+          <div className="rounded-xl bg-white p-6 text-center text-sm text-gray-600 shadow-sm lg:p-8">
             {canEdit
               ? 'No photos have been uploaded for this project yet.'
               : 'You have not captured any photos for this project yet.'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:gap-6 xl:grid-cols-3">
             {photoRecords.map((photo) => (
               <PhotoCard key={photo.id} photo={photo} canEdit={canEdit} />
             ))}
           </div>
         )}
       </div>
-      <section className="mx-auto mt-10 max-w-5xl space-y-6">
+      <section className="mx-auto mt-6 max-w-5xl space-y-4 lg:mt-10 lg:space-y-6">
         <ProjectDetailSection
           title="Labels"
           actionHref={`/admin/projects/${project.id}/labels`}
@@ -458,12 +460,12 @@ function ProjectDetailSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+    <section className="rounded-xl bg-white p-4 shadow-sm lg:p-6">
+      <div className="mb-3 flex items-center justify-between gap-2 lg:mb-4">
+        <h2 className="text-base font-semibold text-slate-900 lg:text-lg">{title}</h2>
         <Link
           href={actionHref}
-          className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+          className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-700 lg:text-sm"
         >
           + {actionLabel}
         </Link>
