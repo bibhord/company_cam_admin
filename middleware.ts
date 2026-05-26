@@ -6,21 +6,6 @@ import type { NextRequest } from 'next/server';
 const APP_HOSTS = new Set(['app.captureyourwork.com', 'www.captureyourwork.com', 'captureyourwork.com']);
 const SUBDOMAIN_RE = /^([a-z0-9-]+)\.captureyourwork\.com$/i;
 
-// Post-auth /m/* paths that now live under /admin/*. Auth pages (login, signup,
-// onboarding, etc.) are intentionally NOT in this map so Capacitor can still
-// boot into the mobile-optimized flow before redirecting after sign-in.
-function unifiedAdminPath(pathname: string): string | null {
-  if (pathname === '/m' || pathname === '/m/') return '/admin/photos';
-  if (pathname === '/m/projects') return '/admin/projects';
-  if (pathname.startsWith('/m/projects/')) {
-    return '/admin/projects/' + pathname.slice('/m/projects/'.length);
-  }
-  if (pathname === '/m/settings') return '/admin/settings';
-  if (pathname === '/m/website') return '/admin/portfolio';
-  if (pathname === '/m/upgrade') return '/admin/upgrade';
-  return null;
-}
-
 function needsAuth(pathname: string): boolean {
   if (pathname.startsWith('/admin')) return true;
   if (pathname.startsWith('/superadmin')) return true;
@@ -68,16 +53,6 @@ export async function middleware(req: NextRequest) {
     const isMobile = pathname.startsWith('/m');
     const loginUrl = new URL(isMobile ? '/m/login' : '/login', req.url);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // After auth: collapse /m/* into /admin/* so authenticated users see the
-  // unified responsive admin views. Capacitor boots into /m, signs in, then
-  // lands on /admin/photos transparently.
-  const unified = unifiedAdminPath(pathname);
-  if (unified) {
-    const url = req.nextUrl.clone();
-    url.pathname = unified;
-    return NextResponse.redirect(url);
   }
 
   return res;
