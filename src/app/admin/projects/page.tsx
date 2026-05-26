@@ -137,29 +137,30 @@ export default async function ProjectsPage() {
   const unassignedCount = photoCountByProject.__unassigned ?? 0;
 
   return (
-    <div className="px-6 py-8 lg:px-10">
+    <div className="px-4 py-5 lg:px-10 lg:py-8">
       {/* Header */}
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
-          <p className="mt-1 text-sm text-slate-500">
+      <div className="mb-5 flex items-start justify-between gap-3 lg:mb-8">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 lg:text-2xl">Projects</h1>
+          <p className="mt-1 text-xs text-slate-500 lg:text-sm">
             {projectRecords.length} project{projectRecords.length !== 1 ? 's' : ''} &middot; {photoRecords.length} photo{photoRecords.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <Link
             href="/admin/projects/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600"
+            aria-label="New project"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600 lg:px-4"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            New Project
+            <span className="hidden lg:inline">New Project</span>
           </Link>
           {canManageOrg ? (
             <Link
               href="/admin/users"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 lg:inline-flex"
             >
               Manage Users
             </Link>
@@ -167,30 +168,27 @@ export default async function ProjectsPage() {
         </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Total Projects</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{projectRecords.length}</p>
+      {/* Stats — inline summary on mobile, three cards on desktop */}
+      <div className="mb-6 grid grid-cols-3 gap-2 lg:mb-8 lg:gap-4">
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 lg:p-5">
+          <p className="text-[11px] font-medium text-slate-500 lg:text-sm">Projects</p>
+          <p className="mt-0.5 text-lg font-bold text-slate-900 lg:mt-1 lg:text-2xl">{projectRecords.length}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Total Photos</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{photoRecords.length}</p>
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 lg:p-5">
+          <p className="text-[11px] font-medium text-slate-500 lg:text-sm">Photos</p>
+          <p className="mt-0.5 text-lg font-bold text-slate-900 lg:mt-1 lg:text-2xl">{photoRecords.length}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Unassigned Photos</p>
-          <p className={`mt-1 text-2xl font-bold ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 lg:p-5">
+          <p className="text-[11px] font-medium text-slate-500 lg:text-sm">Unassigned</p>
+          <p className={`mt-0.5 text-lg font-bold lg:mt-1 lg:text-2xl ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
             {unassignedCount}
           </p>
-          {unassignedCount > 0 && (
-            <p className="mt-1 text-xs text-slate-400">Photos not linked to any project</p>
-          )}
         </div>
       </div>
 
       {/* Projects list */}
-      <section className="mb-10">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">All Projects</h2>
+      <section className="mb-8 lg:mb-10">
+        <h2 className="mb-3 text-sm font-semibold text-slate-900 lg:mb-4 lg:text-base">All Projects</h2>
         {projectRecords.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
@@ -244,7 +242,7 @@ export default async function ProjectsPage() {
 
       {/* Latest uploads */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-slate-900">Latest Uploads</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-900 lg:mb-4 lg:text-base">Latest Uploads</h2>
         {latestPhotoRecords.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
@@ -254,7 +252,7 @@ export default async function ProjectsPage() {
             <p className="mt-1 text-xs text-slate-400">Once your team uploads photos they will appear here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
             {latestPhotoRecords.slice(0, 6).map((photo) => (
               <PhotoCard key={photo.id} photo={photo} canEdit={canManageOrg} />
             ))}
