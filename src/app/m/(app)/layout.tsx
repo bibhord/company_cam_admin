@@ -107,11 +107,19 @@ export default async function MobileLayout({
       <script
         dangerouslySetInnerHTML={{
           __html: `
-            if ('serviceWorker' in navigator) {
+            (function() {
+              var isCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+              if (!('serviceWorker' in navigator)) return;
+              if (isCapacitor) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                });
+                return;
+              }
               window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js');
               });
-            }
+            })();
           `,
         }}
       />

@@ -50,11 +50,21 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
+              (function() {
+                var isCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+                if (!('serviceWorker' in navigator)) return;
+                if (isCapacitor) {
+                  // Capacitor's WKWebView crashes mid-navigation when a SW intercepts.
+                  // Unregister any previously installed SW from a prior PWA visit.
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    regs.forEach(function(r) { r.unregister(); });
+                  });
+                  return;
+                }
+                window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js');
                 });
-              }
+              })();
             `,
           }}
         />

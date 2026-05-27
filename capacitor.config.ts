@@ -4,8 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.captureyourwork.app',
   appName: 'PhotoDoc',
   server: {
-    url: 'https://app.captureyourwork.com/m',
-    cleartext: false,
+    // Debug-only: point at local dev server. Revert to
+    // https://app.captureyourwork.com/m before any shipped build.
+    url: 'http://localhost:3000/login',
+    cleartext: true,
   },
   ios: {
     contentInset: 'automatic',

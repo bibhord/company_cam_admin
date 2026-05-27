@@ -66,5 +66,12 @@
 	<string>CaptureYourWork needs photo library access to upload job site photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>CaptureYourWork needs permission to save photos to your library.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
