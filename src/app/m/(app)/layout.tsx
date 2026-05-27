@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from './components/service-worker-register';
 import { VersionCheck } from './components/version-check';
 import { NotificationPrompt } from './components/notification-prompt';
 import { LocaleWrapper } from './components/locale-wrapper';
+import { PendingSignOutButton } from './pending-sign-out-button';
 import { TrialBanner } from '@/components/trial-banner';
 
 interface ProfileRecord {
@@ -74,14 +75,9 @@ export default async function MobileLayout({
         <p className="mt-2 text-sm text-slate-500">
           Your account has been created and is waiting for approval. You&apos;ll be notified once your account is activated.
         </p>
-        <form action="/api/auth/logout" method="POST" className="mt-6">
-          <button
-            type="submit"
-            className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm"
-          >
-            Sign Out
-          </button>
-        </form>
+        <div className="mt-6">
+          <PendingSignOutButton />
+        </div>
       </div>
     );
   }
