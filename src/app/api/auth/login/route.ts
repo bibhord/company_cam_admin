@@ -5,9 +5,8 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   const { email, password, captchaToken } = await req.json();
-  const isNative = req.headers.get('x-capacitor-native') === '1';
 
-  if (!isNative && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+  if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
     return NextResponse.json({ error: 'Please complete the CAPTCHA.' }, { status: 400 });
   }
 
@@ -16,7 +15,7 @@ export async function POST(req: Request) {
   const { data: { user }, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-    options: isNative ? undefined : { captchaToken },
+    options: { captchaToken },
   });
 
   if (error) {

@@ -1,11 +1,9 @@
 'use client';
 
-import { FormEvent, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Turnstile } from '@/components/turnstile';
-import { isCapacitorNative, signInWithOAuthProvider } from '@/lib/capacitor-oauth';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -18,29 +16,8 @@ export default function SignupPage() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
-  const [isNative, setIsNative] = useState(false);
-  const router = useRouter();
   const supabase = createClientComponentClient();
-  const captchaEnabled = !isNative && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
-  useEffect(() => {
-    setIsNative(isCapacitorNative());
-  }, []);
-
-  useEffect(() => {
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) router.replace('/admin');
-    }
-    checkSession();
-    const onVisible = () => { if (document.visibilityState === 'visible') checkSession(); };
-    document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', checkSession);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', checkSession);
-    };
-  }, [supabase, router]);
+  const captchaEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,18 +25,16 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (isNative) headers['X-Capacitor-Native'] = '1';
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           password,
           first_name: firstName,
           last_name: lastName,
           captchaToken,
-          source: isNative ? 'mobile' : 'web',
+          source: 'web',
         }),
       });
 
@@ -79,30 +54,42 @@ export default function SignupPage() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     setError('');
-    await signInWithOAuthProvider({
-      supabase,
-      provider: 'google',
-      webRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-      capacitorBridgeUrl: `${window.location.origin}/m/auth-callback`,
-      queryParams: { prompt: 'select_account', access_type: 'offline' },
-      onSuccess: () => router.replace('/admin'),
-      onError: setError,
-      onFinally: () => setGoogleLoading(false),
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+          queryParams: { prompt: 'select_account', access_type: 'offline' },
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setGoogleLoading(false);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setGoogleLoading(false);
+    }
   };
 
   const handleAppleSignUp = async () => {
     setAppleLoading(true);
     setError('');
-    await signInWithOAuthProvider({
-      supabase,
-      provider: 'apple',
-      webRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-      capacitorBridgeUrl: `${window.location.origin}/m/auth-callback`,
-      onSuccess: () => router.replace('/admin'),
-      onError: setError,
-      onFinally: () => setAppleLoading(false),
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setAppleLoading(false);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setAppleLoading(false);
+    }
   };
 
   return (

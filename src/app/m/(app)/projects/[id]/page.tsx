@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { MobileHeader } from '../../components/mobile-header';
-import { AnnotationModal } from '@/components/annotations/annotation-modal';
-import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
-import { EMPTY_DOC, type AnnotationDoc } from '@/lib/annotations';
 
 interface ProjectPhoto {
   id: string;
@@ -77,27 +74,6 @@ export default function ProjectDetailPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Annotations (keyed by photo id)
-  const [annotations, setAnnotations] = useState<Record<string, AnnotationDoc>>({});
-  const [naturals, setNaturals] = useState<Record<string, { w: number; h: number }>>({});
-  const [annotateOpen, setAnnotateOpen] = useState(false);
-
-  async function loadAnnotationsFor(photos: ProjectPhoto[]) {
-    const results = await Promise.all(
-      photos.map(async (p) => {
-        try {
-          const res = await fetch(`/api/admin/photos/${p.id}/annotations`);
-          if (!res.ok) return [p.id, EMPTY_DOC] as const;
-          const json = await res.json();
-          return [p.id, (json?.data ?? EMPTY_DOC) as AnnotationDoc] as const;
-        } catch {
-          return [p.id, EMPTY_DOC] as const;
-        }
-      }),
-    );
-    setAnnotations((prev) => ({ ...prev, ...Object.fromEntries(results) }));
-  }
-
   async function fetchProject() {
     try {
       const res = await fetch(`/api/m/projects/${id}`);
@@ -108,7 +84,6 @@ export default function ProjectDetailPage() {
         setStreetAddress(data.street_address ?? '');
         setCity(data.city ?? '');
         setStateZip(data.state_zip ?? '');
-        loadAnnotationsFor(data.photos);
       }
     } catch (err) {
       console.error('Failed to fetch project:', err);
@@ -317,24 +292,7 @@ export default function ProjectDetailPage() {
                     className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
                   >
                     {photo.signed_url ? (
-                      <>
-                        <img
-                          src={photo.signed_url}
-                          alt={photo.name}
-                          className="h-full w-full object-cover"
-                          onLoad={(e) => {
-                            const el = e.currentTarget;
-                            setNaturals((prev) => ({ ...prev, [photo.id]: { w: el.naturalWidth, h: el.naturalHeight } }));
-                          }}
-                        />
-                        {naturals[photo.id] && annotations[photo.id]?.shapes.length > 0 && (
-                          <AnnotationOverlay
-                            doc={annotations[photo.id]}
-                            naturalWidth={naturals[photo.id].w}
-                            naturalHeight={naturals[photo.id].h}
-                          />
-                        )}
-                      </>
+                      <img src={photo.signed_url} alt={photo.name} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
                         <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -478,22 +436,7 @@ export default function ProjectDetailPage() {
             {/* Photo preview */}
             {editingPhoto.signed_url && (
               <div className="relative h-48 w-full overflow-hidden rounded-t-2xl bg-slate-100">
-                <img
-                  src={editingPhoto.signed_url}
-                  alt={editingPhoto.name}
-                  className="h-full w-full object-cover"
-                  onLoad={(e) => {
-                    const el = e.currentTarget;
-                    setNaturals((prev) => ({ ...prev, [editingPhoto.id]: { w: el.naturalWidth, h: el.naturalHeight } }));
-                  }}
-                />
-                {naturals[editingPhoto.id] && annotations[editingPhoto.id]?.shapes.length > 0 && (
-                  <AnnotationOverlay
-                    doc={annotations[editingPhoto.id]}
-                    naturalWidth={naturals[editingPhoto.id].w}
-                    naturalHeight={naturals[editingPhoto.id].h}
-                  />
-                )}
+                <img src={editingPhoto.signed_url} alt={editingPhoto.name} className="h-full w-full object-cover" />
                 <button
                   onClick={() => setEditingPhoto(null)}
                   className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-sm"
@@ -535,14 +478,6 @@ export default function ProjectDetailPage() {
                 >
                   {savingPhoto ? 'Saving...' : 'Save'}
                 </button>
-                {editingPhoto.signed_url && (
-                  <button
-                    onClick={() => setAnnotateOpen(true)}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors active:bg-slate-50"
-                  >
-                    Annotate
-                  </button>
-                )}
                 <button
                   onClick={handleDeletePhoto}
                   disabled={deletingPhoto}
@@ -554,18 +489,6 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {editingPhoto?.signed_url && (
-        <AnnotationModal
-          photoId={editingPhoto.id}
-          imageUrl={editingPhoto.signed_url}
-          open={annotateOpen}
-          onClose={() => {
-            setAnnotateOpen(false);
-            loadAnnotationsFor([editingPhoto]);
-          }}
-        />
       )}
     </div>
   );

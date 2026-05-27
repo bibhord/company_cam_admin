@@ -81,21 +81,21 @@ export function SettingsClient({ userEmail, profile }: SettingsClientProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pb-4 pt-5 lg:px-6 lg:pb-6 lg:pt-10">
-        <h1 className="text-xl font-bold text-slate-900 lg:text-3xl">My Settings</h1>
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 pb-6 pt-10">
+        <h1 className="text-3xl font-bold text-slate-900">My Settings</h1>
         <button
           type="button"
           onClick={handleSubmit}
           disabled={pending}
-          className="shrink-0 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300 lg:px-4"
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
         >
-          {pending ? 'Saving…' : 'Save'}
+          {pending ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
 
-      <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 lg:space-y-8 lg:px-6">
+      <div className="mx-auto max-w-6xl space-y-8 px-6 pb-12">
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900 lg:text-lg">Account Info</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Account Info</h2>
           <div className="rounded-xl border border-slate-200 bg-slate-50">
             <details className="group">
               <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-slate-900">
@@ -140,7 +140,7 @@ export function SettingsClient({ userEmail, profile }: SettingsClientProps) {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900 lg:text-lg">Profile Info</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Profile Info</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <LabeledInput
               label="First Name"
@@ -158,8 +158,8 @@ export function SettingsClient({ userEmail, profile }: SettingsClientProps) {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900 lg:text-lg">User Role</h2>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-lg font-semibold text-slate-900">User Role</h2>
+          <div className="grid gap-3 lg:grid-cols-4">
             {roleCards.map((card) => {
               const active = role === card.key;
               return (
