@@ -16,6 +16,7 @@ export function LogoutButton({ variant = 'primary', className = '' }: LogoutButt
     startTransition(async () => {
       await fetch('/api/auth/logout', { method: 'POST' });
       await supabase.auth.signOut();
+      try { localStorage.clear(); } catch {}
       window.location.href = '/login';
     });
   };

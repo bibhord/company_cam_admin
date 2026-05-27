@@ -6,6 +6,7 @@ import { notifyNewSignup } from '@/lib/notify-signup';
 
 export async function POST(req: Request) {
   const { email, password, first_name, last_name, captchaToken, source } = await req.json();
+  const isNative = req.headers.get('x-capacitor-native') === '1';
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
   }
 
-  if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+  if (!isNative && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
     return NextResponse.json({ error: 'Please complete the CAPTCHA.' }, { status: 400 });
   }
 
@@ -30,8 +31,8 @@ export async function POST(req: Request) {
         first_name: first_name || null,
         last_name: last_name || null,
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com'}${source === 'web' ? '/login' : '/m/login'}?verified=true`,
-      captchaToken,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.captureyourwork.com'}${source === 'mobile' ? '/m/login' : '/login'}?verified=true`,
+      captchaToken: isNative ? undefined : captchaToken,
     },
   });
 

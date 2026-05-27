@@ -2,11 +2,12 @@
 // src/app/login/page.tsx
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Turnstile } from '@/components/turnstile';
+import { isCapacitorNative, signInWithOAuthProvider } from '@/lib/capacitor-oauth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,10 +17,30 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
+  const [isNative, setIsNative] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
   const isDev = process.env.NODE_ENV !== 'production';
-  const captchaEnabled = !isDev && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const captchaEnabled = !isDev && !isNative && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  useEffect(() => {
+    setIsNative(isCapacitorNative());
+  }, []);
+
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) router.replace('/admin');
+    }
+    checkSession();
+    const onVisible = () => { if (document.visibilityState === 'visible') checkSession(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', checkSession);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', checkSession);
+    };
+  }, [supabase, router]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,9 +50,11 @@ export default function LoginPage() {
     try {
       const endpoint = isDev ? '/api/dev/login' : '/api/auth/login';
       const body = isDev ? { email } : { email, password, captchaToken };
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (isNative) headers['X-Capacitor-Native'] = '1';
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body),
       });
 
@@ -51,42 +74,30 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setError('');
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-          queryParams: { prompt: 'select_account', access_type: 'offline' },
-        },
-      });
-      if (error) {
-        setError(error.message);
-        setGoogleLoading(false);
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-      setGoogleLoading(false);
-    }
+    await signInWithOAuthProvider({
+      supabase,
+      provider: 'google',
+      webRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+      capacitorBridgeUrl: `${window.location.origin}/m/auth-callback`,
+      queryParams: { prompt: 'select_account', access_type: 'offline' },
+      onSuccess: () => router.replace('/admin'),
+      onError: setError,
+      onFinally: () => setGoogleLoading(false),
+    });
   };
 
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
     setError('');
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-        },
-      });
-      if (error) {
-        setError(error.message);
-        setAppleLoading(false);
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-      setAppleLoading(false);
-    }
+    await signInWithOAuthProvider({
+      supabase,
+      provider: 'apple',
+      webRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+      capacitorBridgeUrl: `${window.location.origin}/m/auth-callback`,
+      onSuccess: () => router.replace('/admin'),
+      onError: setError,
+      onFinally: () => setAppleLoading(false),
+    });
   };
 
   return (

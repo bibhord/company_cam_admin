@@ -4,7 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.captureyourwork.app',
   appName: 'PhotoDoc',
   server: {
-    url: 'https://app.captureyourwork.com/m',
+    url: 'https://app.captureyourwork.com/admin/photos',
     cleartext: false,
   },
   ios: {
