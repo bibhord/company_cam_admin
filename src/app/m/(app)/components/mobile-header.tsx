@@ -10,7 +10,7 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ title, showBack = false, backHref = '/m' }: MobileHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
       <div className="relative flex h-12 items-center justify-center px-4">
         {showBack && (
           <Link
