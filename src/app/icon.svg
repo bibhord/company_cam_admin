@@ -1,0 +1,25 @@
+<!--
+  PhotoDoc app icon — amber rounded square with white camera outline.
+  Generate PNG icons from this SVG:
+    npx svgexport icon.svg icon-192.png 192:192
+    npx svgexport icon.svg icon-512.png 512:512
+  Or use any SVG-to-PNG tool / Figma export.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Amber rounded-square background -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#F59E0B"/>
+
+  <!-- Camera body -->
+  <rect x="116" y="196" width="280" height="200" rx="32" ry="32"
+        fill="none" stroke="#FFFFFF" stroke-width="24" stroke-linejoin="round"/>
+
+  <!-- Camera top / viewfinder bump -->
+  <path d="M196 196 L196 164 Q196 148 212 148 L300 148 Q316 148 316 164 L316 196"
+        fill="none" stroke="#FFFFFF" stroke-width="24" stroke-linejoin="round"/>
+
+  <!-- Lens circle -->
+  <circle cx="256" cy="296" r="56" fill="none" stroke="#FFFFFF" stroke-width="24"/>
+
+  <!-- Lens inner dot -->
+  <circle cx="256" cy="296" r="20" fill="#FFFFFF"/>
+</svg>
