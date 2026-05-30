@@ -123,7 +123,7 @@ export function AnnotationModal({ photoId, imageUrl, open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[150] flex flex-col bg-slate-900/95 backdrop-blur-sm">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200">
         <ToolBtn label="Pen" active={tool === 'pen'} onClick={() => setTool('pen')} />
