@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MobileHeader } from './components/mobile-header';
+import { AnnotationModal } from '@/components/annotations/annotation-modal';
 
 interface Photo {
   id: string;
@@ -10,6 +11,8 @@ interface Photo {
   project_id: string | null;
   project_name: string | null;
   created_at: string;
+  tags?: string[] | null;
+  notes?: string | null;
 }
 
 interface Project {
@@ -54,6 +57,53 @@ export default function PhotosPage() {
   const [reassigning, setReassigning] = useState(false);
   const [detailProjects, setDetailProjects] = useState<Project[]>([]);
   const [loadingDetailProjects, setLoadingDetailProjects] = useState(false);
+  const [annotationOpen, setAnnotationOpen] = useState(false);
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  function openEditDetails() {
+    if (!selectedPhoto) return;
+    setEditName(selectedPhoto.name ?? '');
+    setEditTags((selectedPhoto.tags ?? []).join(', '));
+    setEditNotes(selectedPhoto.notes ?? '');
+    setDetailsError(null);
+    setEditingDetails(true);
+  }
+
+  async function saveDetails() {
+    if (!selectedPhoto) return;
+    setSavingDetails(true);
+    setDetailsError(null);
+    try {
+      const res = await fetch(`/api/m/photos/${selectedPhoto.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName, tags: editTags, notes: editNotes }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error ?? 'Unable to save photo.');
+      }
+      const updated = await res.json();
+      const next: Photo = {
+        ...selectedPhoto,
+        name: updated.name ?? editName,
+        tags: updated.tags ?? [],
+        notes: updated.notes ?? null,
+      };
+      setSelectedPhoto(next);
+      setPhotos((prev) => prev.map((p) => (p.id === next.id ? { ...p, ...next } : p)));
+      setEditingDetails(false);
+    } catch (err) {
+      setDetailsError(err instanceof Error ? err.message : 'Unable to save photo.');
+    } finally {
+      setSavingDetails(false);
+    }
+  }
 
   async function fetchPhotos() {
     setLoading(true);
@@ -370,7 +420,7 @@ export default function PhotosPage() {
 
       {/* Photo Detail Modal */}
       {selectedPhoto && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => { setSelectedPhoto(null); setReassigning(false); }}>
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => { setSelectedPhoto(null); setReassigning(false); setEditingDetails(false); }}>
           <div
             className="w-full max-w-lg rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
             onClick={(e) => e.stopPropagation()}
@@ -380,7 +430,7 @@ export default function PhotosPage() {
               <div className="relative h-64 w-full overflow-hidden rounded-t-2xl bg-slate-100">
                 <img src={selectedPhoto.signed_url} alt={selectedPhoto.name} className="h-full w-full object-cover" />
                 <button
-                  onClick={() => { setSelectedPhoto(null); setReassigning(false); }}
+                  onClick={() => { setSelectedPhoto(null); setReassigning(false); setEditingDetails(false); }}
                   className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-sm"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -474,8 +524,81 @@ export default function PhotosPage() {
                 </div>
               </div>
 
+              {editingDetails ? (
+                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Tags</label>
+                    <input
+                      type="text"
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
+                      placeholder="Comma separated"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+                    <textarea
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      rows={3}
+                      className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                  {detailsError && (
+                    <p className="text-xs text-red-600">{detailsError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveDetails}
+                      disabled={savingDetails}
+                      className="flex-1 rounded-lg bg-slate-800 py-2 text-sm font-semibold text-white transition-colors active:bg-slate-900 disabled:opacity-60"
+                    >
+                      {savingDetails ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingDetails(false)}
+                      className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openEditDetails}
+                  className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 transition-colors active:bg-slate-50"
+                >
+                  Edit details
+                </button>
+              )}
+
+              {selectedPhoto.signed_url && (
+                <button
+                  onClick={() => setAnnotationOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white transition-colors active:bg-amber-600"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                  </svg>
+                  Annotate
+                </button>
+              )}
+
               <button
-                onClick={() => { setSelectedPhoto(null); setReassigning(false); }}
+                onClick={() => { setSelectedPhoto(null); setReassigning(false); setEditingDetails(false); }}
                 className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
               >
                 Close
@@ -483,6 +606,15 @@ export default function PhotosPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedPhoto?.signed_url && (
+        <AnnotationModal
+          photoId={selectedPhoto.id}
+          imageUrl={selectedPhoto.signed_url}
+          open={annotationOpen}
+          onClose={() => setAnnotationOpen(false)}
+        />
       )}
 
       {/* Project Assignment Modal */}

@@ -42,6 +42,14 @@ export async function PATCH(
   if (typeof body.name === 'string') updates.name = body.name.trim();
   if (typeof body.notes === 'string') updates.notes = body.notes.trim() || null;
   if (body.project_id !== undefined) updates.project_id = body.project_id || null;
+  if (typeof body.tags === 'string') {
+    updates.tags = body.tags
+      .split(',')
+      .map((t: string) => t.trim())
+      .filter(Boolean);
+  } else if (Array.isArray(body.tags)) {
+    updates.tags = body.tags.map((t: unknown) => String(t).trim()).filter(Boolean);
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No fields to update.' }, { status: 400 });
@@ -52,7 +60,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('org_id', profile.org_id)
-    .select('id, name, notes')
+    .select('id, name, notes, tags')
     .single();
 
   if (updateError) {
