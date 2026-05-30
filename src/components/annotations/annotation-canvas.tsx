@@ -58,7 +58,7 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
   // Convert stage coords -> natural image coords for storage.
   const toNatural = (pt: { x: number; y: number }) => ({ x: pt.x / scale, y: pt.y / scale });
 
-  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!img) return;
     if (tool === 'select') {
       const clicked = e.target;
@@ -89,7 +89,7 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
     }
   };
 
-  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing.current || tool === 'select' || tool === 'text') return;
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
@@ -120,7 +120,10 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          style={{ cursor: tool === 'select' ? 'default' : 'crosshair' }}
+          onTouchStart={handleMouseDown}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
+          style={{ cursor: tool === 'select' ? 'default' : 'crosshair', touchAction: 'none' }}
         >
           <Layer>
             <KonvaImage image={img} width={stageSize.width} height={stageSize.height} name="background" listening={tool === 'select'} />
