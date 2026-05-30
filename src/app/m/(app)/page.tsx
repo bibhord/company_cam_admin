@@ -18,6 +18,36 @@ interface Photo {
   annotations?: AnnotationDoc | null;
 }
 
+function PhotoPreviewWithOverlay({ url, name, annotations }: { url: string; name: string; annotations: AnnotationDoc | null }) {
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const hasAnnotations = !!annotations && annotations.shapes.length > 0;
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div
+        className="relative"
+        style={
+          natural
+            ? { aspectRatio: `${natural.w} / ${natural.h}`, maxHeight: '100%', maxWidth: '100%', height: '100%' }
+            : { height: '100%', width: '100%' }
+        }
+      >
+        <img
+          src={url}
+          alt={name}
+          className="h-full w-full object-contain"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth && img.naturalHeight) setNatural({ w: img.naturalWidth, h: img.naturalHeight });
+          }}
+        />
+        {natural && hasAnnotations && annotations && (
+          <AnnotationOverlay doc={annotations} naturalWidth={natural.w} naturalHeight={natural.h} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PhotoThumb({ photo, className, iconClassName }: { photo: Photo; className: string; iconClassName: string }) {
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const hasAnnotations = !!photo.annotations && photo.annotations.shapes.length > 0;
@@ -454,8 +484,12 @@ export default function PhotosPage() {
           >
             {/* Photo preview */}
             {selectedPhoto.signed_url && (
-              <div className="relative h-64 w-full overflow-hidden rounded-t-2xl bg-slate-100">
-                <img src={selectedPhoto.signed_url} alt={selectedPhoto.name} className="h-full w-full object-cover" />
+              <div className="relative h-64 w-full overflow-hidden rounded-t-2xl bg-slate-900">
+                <PhotoPreviewWithOverlay
+                  url={selectedPhoto.signed_url}
+                  name={selectedPhoto.name}
+                  annotations={selectedPhoto.annotations ?? null}
+                />
                 <button
                   onClick={() => { setSelectedPhoto(null); setReassigning(false); setEditingDetails(false); }}
                   className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-sm"
