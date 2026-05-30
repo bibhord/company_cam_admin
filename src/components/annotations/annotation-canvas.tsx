@@ -24,14 +24,16 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
 
-  // Load the image into a HTMLImageElement so Konva can render it. Requires
-  // CORS on the R2 bucket so the canvas stays untainted (needed if we ever
-  // export the canvas as PNG/PDF).
+  // Load the image into a HTMLImageElement so Konva can render it.
+  // We do NOT set crossOrigin because Capacitor's WKWebView image loads
+  // can fail CORS even when the same URL works in the regular browser.
+  // The canvas becomes "tainted", which is fine — we only persist `doc`
+  // (the shape model) and never export the rendered canvas.
   useEffect(() => {
     const el = new window.Image();
-    el.crossOrigin = 'anonymous';
     el.src = imageUrl;
     el.onload = () => setImg(el);
+    el.onerror = () => console.error('annotation image failed to load', imageUrl);
   }, [imageUrl]);
 
   // Fit stage to container while preserving image aspect ratio.
