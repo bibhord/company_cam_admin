@@ -37,10 +37,16 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [annotationOpen, setAnnotationOpen] = useState(false);
-  const [annotationDoc, setAnnotationDoc] = useState<AnnotationDoc>(EMPTY_DOC);
+  const [annotationDoc, setAnnotationDoc] = useState<AnnotationDoc>(() => {
+    const raw = photo.photo_annotations;
+    const candidate = Array.isArray(raw) ? raw[0]?.data : raw?.data;
+    return candidate && typeof candidate === 'object' ? (candidate as AnnotationDoc) : EMPTY_DOC;
+  });
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
 
+  // Refresh annotations when the editor closes (after a save / delete).
   useEffect(() => {
+    if (annotationOpen) return;
     let cancelled = false;
     fetch(`/api/admin/photos/${photo.id}/annotations`)
       .then((r) => r.json())
@@ -48,6 +54,8 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [photo.id, annotationOpen]);
+
+  const hasAnnotations = annotationDoc.shapes.length > 0;
 
   const statusLabel = useMemo(() => formatStatus(photo.upload_status || photo.status || 'unknown'), [
     photo.upload_status,
@@ -148,6 +156,18 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
             {statusLabel}
           </span>
         </div>
+        {hasAnnotations && (
+          <div className="absolute top-2 left-2">
+            <span
+              aria-label="Has annotations"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+              </svg>
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}

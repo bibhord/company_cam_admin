@@ -82,7 +82,8 @@ export default async function ProjectsPage() {
     .select(`
       id, name, url, created_at, project_id, object_key,
       notes, tags, upload_status, status, created_by,
-      projects ( name )
+      projects ( name ),
+      photo_annotations ( data )
     `)
     .eq('org_id', profile.org_id);
 

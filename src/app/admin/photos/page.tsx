@@ -70,7 +70,8 @@ export default async function PhotosPage() {
         upload_status,
         status,
         created_by,
-        projects ( name )
+        projects ( name ),
+        photo_annotations ( data )
       `
     )
     .eq('org_id', profile.org_id);

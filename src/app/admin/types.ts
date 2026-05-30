@@ -19,6 +19,10 @@ export interface PhotoRecord {
         name: string | null;
       }[]
     | null;
+  photo_annotations?:
+    | { data: unknown }
+    | { data: unknown }[]
+    | null;
 }
 
 export interface ProjectRecord {

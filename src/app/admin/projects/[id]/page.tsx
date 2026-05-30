@@ -153,7 +153,8 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         upload_status,
         status,
         created_by,
-        projects ( name )
+        projects ( name ),
+        photo_annotations ( data )
       `
     )
     .eq('project_id', project.id)
