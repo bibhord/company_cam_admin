@@ -53,7 +53,7 @@ export async function GET() {
 
   const { data: photos, error: photosError } = await supabase
     .from('photos')
-    .select('*, projects(name)')
+    .select('*, projects(name), photo_annotations(data)')
     .eq('org_id', profile.org_id)
     .order('created_at', { ascending: false });
 
@@ -63,7 +63,7 @@ export async function GET() {
   }
 
   const photosWithUrls = await Promise.all(
-    (photos as PhotoRecord[]).map(async (photo) => {
+    (photos as (PhotoRecord & { photo_annotations?: { data: unknown }[] | { data: unknown } | null })[]).map(async (photo) => {
       let signedUrl: string | null = null;
       try {
         signedUrl = await r2SignedUrl(photo.object_key, 3600);
@@ -71,11 +71,17 @@ export async function GET() {
         console.error('Error generating signed URL for photo', photo.id, err);
       }
 
+      const annRaw = photo.photo_annotations;
+      const ann = Array.isArray(annRaw) ? annRaw[0]?.data : annRaw?.data;
+      const annotations = ann && typeof ann === 'object' ? ann : null;
+
       return {
         ...photo,
         project_name: photo.projects?.name ?? null,
         signed_url: signedUrl,
+        annotations,
         projects: undefined,
+        photo_annotations: undefined,
       };
     })
   );

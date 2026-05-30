@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { MobileHeader } from './components/mobile-header';
 import { MobileAnnotationModal } from './components/mobile-annotation-modal';
+import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
+import type { AnnotationDoc } from '@/lib/annotations';
 
 interface Photo {
   id: string;
@@ -13,6 +15,47 @@ interface Photo {
   created_at: string;
   tags?: string[] | null;
   notes?: string | null;
+  annotations?: AnnotationDoc | null;
+}
+
+function PhotoThumb({ photo, className, iconClassName }: { photo: Photo; className: string; iconClassName: string }) {
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const hasAnnotations = !!photo.annotations && photo.annotations.shapes.length > 0;
+  if (!photo.signed_url) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-slate-100`}>
+        <svg className={iconClassName} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <div className={`relative ${className}`}>
+      <img
+        src={photo.signed_url}
+        alt={photo.name}
+        className="h-full w-full object-cover"
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth && img.naturalHeight) setNatural({ w: img.naturalWidth, h: img.naturalHeight });
+        }}
+      />
+      {hasAnnotations && natural && photo.annotations && (
+        <AnnotationOverlay doc={photo.annotations} naturalWidth={natural.w} naturalHeight={natural.h} />
+      )}
+      {hasAnnotations && (
+        <span
+          aria-label="Has annotations"
+          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm"
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
 }
 
 interface Project {
@@ -345,15 +388,7 @@ export default function PhotosPage() {
                 onClick={() => setSelectedPhoto(photo)}
                 className="flex w-full items-center gap-3 rounded-xl bg-white p-3 shadow-sm text-left"
               >
-                {photo.signed_url ? (
-                  <img src={photo.signed_url} alt={photo.name} className="h-14 w-14 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-slate-100">
-                    <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                    </svg>
-                  </div>
-                )}
+                <PhotoThumb photo={photo} className="h-14 w-14 shrink-0 overflow-hidden rounded-lg" iconClassName="h-6 w-6 text-slate-300" />
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-900">{photo.name}</p>
                   {photo.project_name && (
@@ -372,15 +407,7 @@ export default function PhotosPage() {
                 onClick={() => setSelectedPhoto(photo)}
                 className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
               >
-                {photo.signed_url ? (
-                  <img src={photo.signed_url} alt={photo.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                    </svg>
-                  </div>
-                )}
+                <PhotoThumb photo={photo} className="absolute inset-0" iconClassName="h-8 w-8 text-slate-300" />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
                   <p className="truncate text-xs font-medium text-white">{photo.name}</p>
                 </div>

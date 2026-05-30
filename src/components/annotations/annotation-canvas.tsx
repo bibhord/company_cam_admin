@@ -131,17 +131,22 @@ export function AnnotationCanvas({ imageUrl, doc, tool, color, strokeWidth, onCh
     const id = crypto.randomUUID();
     isDrawing.current = true;
 
+    // Convert the display-pixel stroke width to natural pixels so the
+    // editor renders at the intended size *and* the SVG overlay scales
+    // proportionally on thumbnails.
+    const naturalStrokeWidth = scale > 0 ? strokeWidth / scale : strokeWidth;
+
     if (tool === 'pen') {
-      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'pen', points: [np.x, np.y], color, strokeWidth }] });
+      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'pen', points: [np.x, np.y], color, strokeWidth: naturalStrokeWidth }] });
     } else if (tool === 'arrow') {
-      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'arrow', from: [np.x, np.y], to: [np.x, np.y], color, strokeWidth }] });
+      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'arrow', from: [np.x, np.y], to: [np.x, np.y], color, strokeWidth: naturalStrokeWidth }] });
     } else if (tool === 'rect') {
-      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'rect', x: np.x, y: np.y, width: 0, height: 0, color, strokeWidth }] });
+      onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'rect', x: np.x, y: np.y, width: 0, height: 0, color, strokeWidth: naturalStrokeWidth }] });
     } else if (tool === 'text') {
       const text = window.prompt('Text label:', '');
       isDrawing.current = false;
       if (text) {
-        onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'text', x: np.x, y: np.y, text, color, fontSize: 32 }] });
+        onChange({ ...doc, shapes: [...doc.shapes, { id, type: 'text', x: np.x, y: np.y, text, color, fontSize: 32 / (scale > 0 ? scale : 1) }] });
       }
     }
   };
