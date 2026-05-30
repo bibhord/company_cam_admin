@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { EMPTY_DOC, type AnnotationColor, type AnnotationDoc } from '@/lib/annotations';
+import { EMPTY_DOC, type AnnotationColor, type AnnotationDoc, type Shape } from '@/lib/annotations';
+
+function isStubShape(s: Shape): boolean {
+  if (s.type === 'pen') return s.points.length <= 2;
+  if (s.type === 'arrow') return s.from[0] === s.to[0] && s.from[1] === s.to[1];
+  if (s.type === 'rect') return s.width === 0 && s.height === 0;
+  return false;
+}
 
 const AnnotationCanvas = dynamic(
   () => import('@/components/annotations/annotation-canvas').then((m) => m.AnnotationCanvas),
@@ -28,13 +35,17 @@ interface Props {
 
 export function MobileAnnotationModal({ photoId, imageUrl, open, onClose }: Props) {
   const [doc, setDoc] = useState<AnnotationDoc>(EMPTY_DOC);
-  const [history, setHistory] = useState<AnnotationDoc[]>([EMPTY_DOC]);
   const [historyIdx, setHistoryIdx] = useState(0);
   const [tool, setTool] = useState<MobileTool>('pen');
   const [color, setColor] = useState<AnnotationColor>('#ef4444');
   const [strokeWidth, setStrokeWidth] = useState<number>(8);
   const [loading, setLoading] = useState(true);
   const [autoSaving, setAutoSaving] = useState(false);
+  const historyRef = useRef<AnnotationDoc[]>([EMPTY_DOC]);
+  const historyIdxRef = useRef(0);
+  // Tracks the last shape's id from the previous onChange so we can tell a
+  // stroke continuation (same id, replace tip) from a new stroke (push).
+  const currentStrokeIdRef = useRef<string | null>(null);
   const dirtyRef = useRef(false);
   const lastSavedRef = useRef<AnnotationDoc>(EMPTY_DOC);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,25 +68,58 @@ export function MobileAnnotationModal({ photoId, imageUrl, open, onClose }: Prop
   }, [photoId]);
 
   const onCanvasChange = (next: AnnotationDoc) => {
-    setDoc(next);
+    const lastShape = next.shapes[next.shapes.length - 1];
+    const nextStrokeId = lastShape?.id ?? null;
+    const isNewStroke = nextStrokeId !== currentStrokeIdRef.current;
+
+    // Drop the trailing stub from the *previous* stroke if the user just
+    // started a new one (tap with no drag, then drew elsewhere).
+    let effective = next;
+    if (isNewStroke && next.shapes.length >= 2) {
+      const prev = next.shapes[next.shapes.length - 2];
+      if (isStubShape(prev)) {
+        effective = { ...next, shapes: [...next.shapes.slice(0, -2), next.shapes[next.shapes.length - 1]] };
+      }
+    }
+
+    setDoc(effective);
     dirtyRef.current = true;
-    setHistory((h) => {
-      const trimmed = h.slice(0, historyIdx + 1);
-      return [...trimmed, next];
-    });
-    setHistoryIdx((i) => i + 1);
+
+    const baseIdx = historyIdxRef.current;
+    let newHistory: AnnotationDoc[];
+    let newIdx: number;
+    if (isNewStroke) {
+      // New shape — append a new history entry (and drop any redo branch).
+      const trimmed = historyRef.current.slice(0, baseIdx + 1);
+      newHistory = [...trimmed, effective];
+      newIdx = newHistory.length - 1;
+    } else {
+      // Same stroke being extended — replace the tip in place so an Undo
+      // reverts the whole stroke, not point-by-point.
+      newHistory = [...historyRef.current.slice(0, baseIdx), effective];
+      newIdx = baseIdx;
+    }
+
+    historyRef.current = newHistory;
+    historyIdxRef.current = newIdx;
+    currentStrokeIdRef.current = nextStrokeId;
+    setHistoryIdx(newIdx);
+
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => { void persist(next); }, 1200);
+    saveTimerRef.current = setTimeout(() => { void persist(effective); }, 1200);
   };
 
   const undo = () => {
-    if (historyIdx <= 0) return;
-    const i = historyIdx - 1;
+    if (historyIdxRef.current <= 0) return;
+    const i = historyIdxRef.current - 1;
+    historyIdxRef.current = i;
+    currentStrokeIdRef.current = null; // next change starts a fresh stroke
+    const target = historyRef.current[i];
+    setDoc(target);
     setHistoryIdx(i);
-    setDoc(history[i]);
     dirtyRef.current = true;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => { void persist(history[i]); }, 1200);
+    saveTimerRef.current = setTimeout(() => { void persist(target); }, 1200);
   };
 
   useEffect(() => {
@@ -90,7 +134,9 @@ export function MobileAnnotationModal({ photoId, imageUrl, open, onClose }: Prop
         const loaded = res.data ?? EMPTY_DOC;
         setDoc(loaded);
         lastSavedRef.current = loaded;
-        setHistory([loaded]);
+        historyRef.current = [loaded];
+        historyIdxRef.current = 0;
+        currentStrokeIdRef.current = null;
         setHistoryIdx(0);
       })
       .finally(() => !cancelled && setLoading(false));
