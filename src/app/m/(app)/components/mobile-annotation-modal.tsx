@@ -31,9 +31,15 @@ interface Props {
   imageUrl: string;
   open: boolean;
   onClose: () => void;
+  /**
+   * Called whenever the editor persists a doc (debounced auto-save or
+   * the final flush in Done). Lets the parent update its preview/list
+   * state without re-fetching all photos.
+   */
+  onSaved?: (doc: AnnotationDoc) => void;
 }
 
-export function MobileAnnotationModal({ photoId, imageUrl, open, onClose }: Props) {
+export function MobileAnnotationModal({ photoId, imageUrl, open, onClose, onSaved }: Props) {
   const [doc, setDoc] = useState<AnnotationDoc>(EMPTY_DOC);
   const [historyIdx, setHistoryIdx] = useState(0);
   const [tool, setTool] = useState<MobileTool>('pen');
@@ -60,12 +66,13 @@ export function MobileAnnotationModal({ photoId, imageUrl, open, onClose }: Prop
       });
       lastSavedRef.current = next;
       dirtyRef.current = false;
+      onSaved?.(next);
     } catch {
       // Surface failures only on close; transient ones are debounced.
     } finally {
       setAutoSaving(false);
     }
-  }, [photoId]);
+  }, [photoId, onSaved]);
 
   const onCanvasChange = (next: AnnotationDoc) => {
     const lastShape = next.shapes[next.shapes.length - 1];

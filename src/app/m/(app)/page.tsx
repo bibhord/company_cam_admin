@@ -675,6 +675,11 @@ export default function PhotosPage() {
           imageUrl={selectedPhoto.signed_url}
           open={annotationOpen}
           onClose={() => setAnnotationOpen(false)}
+          onSaved={(savedDoc) => {
+            const targetId = selectedPhoto.id;
+            setSelectedPhoto((curr) => (curr && curr.id === targetId ? { ...curr, annotations: savedDoc } : curr));
+            setPhotos((prev) => prev.map((p) => (p.id === targetId ? { ...p, annotations: savedDoc } : p)));
+          }}
         />
       )}
 
