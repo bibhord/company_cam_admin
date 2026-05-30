@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MobileHeader } from './components/mobile-header';
-import { AnnotationModal } from '@/components/annotations/annotation-modal';
+import { MobileAnnotationModal } from './components/mobile-annotation-modal';
 
 interface Photo {
   id: string;
@@ -609,7 +609,7 @@ export default function PhotosPage() {
       )}
 
       {selectedPhoto?.signed_url && (
-        <AnnotationModal
+        <MobileAnnotationModal
           photoId={selectedPhoto.id}
           imageUrl={selectedPhoto.signed_url}
           open={annotationOpen}
