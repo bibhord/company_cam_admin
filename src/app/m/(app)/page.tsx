@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MobileHeader } from './components/mobile-header';
 import { MobileAnnotationModal } from './components/mobile-annotation-modal';
 import { BeforeAfterSlider } from './components/before-after-slider';
+import { DictationButton } from './components/dictation-button';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
 
@@ -735,7 +736,12 @@ export default function PhotosPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+                    <div className="mb-1 flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-600">Notes</label>
+                      <DictationButton
+                        onTranscript={(t) => setEditNotes((curr) => (curr ? `${curr.trimEnd()} ${t}` : t))}
+                      />
+                    </div>
                     <textarea
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}

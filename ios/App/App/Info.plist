@@ -66,5 +66,9 @@
 	<string>CaptureYourWork needs photo library access to upload job site photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>CaptureYourWork needs permission to save photos to your library.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CaptureYourWork uses the microphone so you can dictate notes about a photo without typing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CaptureYourWork uses speech recognition to turn your spoken notes into text on photos.</string>
 </dict>
 </plist>
