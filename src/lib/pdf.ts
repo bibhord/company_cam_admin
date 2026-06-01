@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 export interface ReportPhotoItem {
+  id: string;
   name: string | null;
   object_key: string;
   signedUrl: string;
@@ -8,6 +9,10 @@ export interface ReportPhotoItem {
   lat: number | null;
   lon: number | null;
   created_at: string;
+  /** Display name of the person who took the photo (or "Unknown"). */
+  photographer: string;
+  /** Hex SHA-256 of the photo's provenance fields. */
+  verifyHash: string;
 }
 
 export interface ReportPdfData {
@@ -16,6 +21,10 @@ export interface ReportPdfData {
   orgName: string;
   createdAt: string;
   photos: ReportPhotoItem[];
+  /** Hex SHA-256 of all per-photo hashes concatenated; the report's fingerprint. */
+  verifyFingerprint: string;
+  /** Schema version of the hash format, in case we evolve it later. */
+  verifyVersion: number;
 }
 
 const AMBER: [number, number, number] = [0.988, 0.631, 0.078]; // amber-500
@@ -53,6 +62,15 @@ export async function generateReportPdf(data: ReportPdfData): Promise<Uint8Array
     year: 'numeric', month: 'long', day: 'numeric',
   });
   cover.drawText(dateStr, { x: MARGIN, y: H - 230, size: 11, font: regular, color: rgb(...MUTED) });
+
+  // Verified Record stamp
+  const stampY = H - 280;
+  cover.drawRectangle({ x: MARGIN, y: stampY - 70, width: W - MARGIN * 2, height: 70, color: rgb(0.97, 0.98, 1), borderColor: rgb(0.78, 0.86, 0.97), borderWidth: 1 });
+  cover.drawText('VERIFIED RECORD', { x: MARGIN + 12, y: stampY - 24, size: 9, font: bold, color: rgb(0.15, 0.32, 0.62) });
+  cover.drawText('This report includes per-photo SHA-256 provenance hashes and a', { x: MARGIN + 12, y: stampY - 40, size: 8, font: regular, color: rgb(...MUTED) });
+  cover.drawText('combined fingerprint that can be recomputed from source records.', { x: MARGIN + 12, y: stampY - 50, size: 8, font: regular, color: rgb(...MUTED) });
+  cover.drawText(`Fingerprint v${data.verifyVersion}:`, { x: MARGIN + 12, y: stampY - 64, size: 7, font: bold, color: rgb(...INK) });
+  cover.drawText(data.verifyFingerprint, { x: MARGIN + 80, y: stampY - 64, size: 7, font: regular, color: rgb(...INK) });
 
   // Footer
   cover.drawText(data.orgName, { x: MARGIN, y: 40, size: 10, font: regular, color: rgb(...MUTED) });
@@ -122,9 +140,15 @@ export async function generateReportPdf(data: ReportPdfData): Promise<Uint8Array
       });
     }
 
-    // Timestamp
-    page.drawText(new Date(photo.created_at).toLocaleString('en-US'), {
+    // Timestamp + photographer
+    page.drawText(`${new Date(photo.created_at).toLocaleString('en-US')} · ${photo.photographer}`, {
       x: MARGIN, y: FOOTER_H - 66, size: 8, font: regular, color: rgb(...MUTED),
+    });
+
+    // Per-photo hash (truncated for legibility; full value is what the
+    // fingerprint chain on the cover is derived from).
+    page.drawText(`SHA-256: ${photo.verifyHash.slice(0, 24)}…${photo.verifyHash.slice(-8)}`, {
+      x: MARGIN, y: FOOTER_H - 80, size: 7, font: regular, color: rgb(...MUTED),
     });
 
     // Page number (bottom right)
