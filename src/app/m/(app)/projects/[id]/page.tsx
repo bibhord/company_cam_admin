@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { MobileHeader } from '../../components/mobile-header';
 import { ShareProjectButton } from './share-project-button';
+import { getCurrentCoords } from '@/lib/geo';
 
 interface ProjectPhoto {
   id: string;
@@ -22,6 +23,8 @@ interface Project {
   city: string | null;
   state_zip: string | null;
   status: ProjectStatus;
+  lat: number | null;
+  lng: number | null;
   photo_count: number;
   updated_at: string;
   photos: ProjectPhoto[];
@@ -417,6 +420,8 @@ export default function ProjectDetailPage() {
               />
             </div>
 
+            <ProjectLocationCard project={project} onUpdate={(lat, lng) => setProject((p) => (p ? { ...p, lat, lng } : p))} />
+
             <button
               onClick={handleSaveDetails}
               disabled={saving}
@@ -492,6 +497,103 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ProjectLocationCard({
+  project,
+  onUpdate,
+}: {
+  project: Project;
+  onUpdate: (lat: number | null, lng: number | null) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function captureLocation() {
+    setBusy(true);
+    setError(null);
+    const coords = await getCurrentCoords();
+    if (!coords) {
+      setError('Could not get your location. Check that location permission is granted.');
+      setBusy(false);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/m/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: coords.lat, lng: coords.lng }),
+      });
+      if (!res.ok) throw new Error('Could not save location.');
+      onUpdate(coords.lat, coords.lng);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save location.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearLocation() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/m/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: null, lng: null }),
+      });
+      if (!res.ok) throw new Error('Could not clear location.');
+      onUpdate(null, null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not clear location.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const hasLocation = project.lat != null && project.lng != null;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-slate-700">Job site location</p>
+          {hasLocation ? (
+            <p className="mt-0.5 text-xs text-slate-500">
+              {project.lat?.toFixed(5)}, {project.lng?.toFixed(5)} — photos within 150&nbsp;m will auto-assign here.
+            </p>
+          ) : (
+            <p className="mt-0.5 text-xs text-slate-500">
+              Set the GPS pin so photos taken on site auto-assign to this project.
+            </p>
+          )}
+        </div>
+        {hasLocation && (
+          <button
+            type="button"
+            onClick={() => void clearLocation()}
+            disabled={busy}
+            className="shrink-0 text-xs font-medium text-slate-400 active:text-slate-600 disabled:opacity-50"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => void captureLocation()}
+        disabled={busy}
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 py-2 text-xs font-semibold text-amber-700 transition active:bg-amber-100 disabled:opacity-60"
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+        </svg>
+        {busy ? 'Getting location…' : hasLocation ? 'Update to current location' : 'Use my current location'}
+      </button>
+      {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
     </div>
   );
 }

@@ -44,7 +44,7 @@ export async function GET(
 
   const { data: project, error: projectError } = await supabase
     .from('projects')
-    .select('id, name, street_address, city, state_zip, status, created_at, updated_at')
+    .select('id, name, street_address, city, state_zip, status, lat, lng, created_at, updated_at')
     .eq('id', id)
     .eq('org_id', profile.org_id)
     .single();
@@ -136,7 +136,15 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden. Admin or manager role required.' }, { status: 403 });
   }
 
-  let body: { name?: string; street_address?: string; city?: string; state_zip?: string; status?: string };
+  let body: {
+    name?: string;
+    street_address?: string;
+    city?: string;
+    state_zip?: string;
+    status?: string;
+    lat?: number | null;
+    lng?: number | null;
+  };
   try {
     body = await request.json();
   } catch {
@@ -153,13 +161,23 @@ export async function PUT(
   if (body.state_zip !== undefined) updates.state_zip = body.state_zip.trim();
   const validStatuses = ['not_started', 'in_progress', 'blocked', 'completed'];
   if (body.status !== undefined && validStatuses.includes(body.status)) updates.status = body.status;
+  if (body.lat !== undefined) {
+    if (body.lat === null) updates.lat = null;
+    else if (typeof body.lat === 'number' && body.lat >= -90 && body.lat <= 90) updates.lat = body.lat;
+    else return NextResponse.json({ error: 'Invalid latitude.' }, { status: 400 });
+  }
+  if (body.lng !== undefined) {
+    if (body.lng === null) updates.lng = null;
+    else if (typeof body.lng === 'number' && body.lng >= -180 && body.lng <= 180) updates.lng = body.lng;
+    else return NextResponse.json({ error: 'Invalid longitude.' }, { status: 400 });
+  }
 
   const { data: updated, error: updateError } = await supabase
     .from('projects')
     .update(updates)
     .eq('id', id)
     .eq('org_id', profile.org_id)
-    .select('id, name, street_address, city, state_zip, status, created_at, updated_at')
+    .select('id, name, street_address, city, state_zip, status, lat, lng, created_at, updated_at')
     .single();
 
   if (updateError) {

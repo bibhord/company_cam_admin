@@ -6,6 +6,7 @@ import { MobileAnnotationModal } from './components/mobile-annotation-modal';
 import { BeforeAfterSlider } from './components/before-after-slider';
 import { DictationButton } from './components/dictation-button';
 import { enqueueUpload, flushQueue, getPending } from '@/lib/upload-queue';
+import { getCurrentCoords, nearestPlace } from '@/lib/geo';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
 
@@ -103,6 +104,8 @@ function PhotoThumb({ photo, className, iconClassName, pairRole }: { photo: Phot
 interface Project {
   id: string;
   name: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 function timeAgo(dateStr: string): string {
@@ -305,23 +308,45 @@ export default function PhotosPage() {
     }
   }
 
-  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Store the file and show the project picker
     setPendingFile(file);
     setPhotoName(file.name.replace(/\.[^.]+$/, ''));
-    setShowProjectModal(true);
     setProjectSearch('');
     setShowNewProject(false);
     setNewProjectName('');
-    fetchProjects();
 
     // Reset input so same file can be re-selected
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+
+    // Try a geofence auto-pick before falling back to the picker. We fetch
+    // the project list and the current GPS fix in parallel and short-
+    // circuit if anything is missing.
+    try {
+      const [projectListRes, coords] = await Promise.all([
+        fetch('/api/m/projects'),
+        getCurrentCoords(5000),
+      ]);
+      if (projectListRes.ok && coords) {
+        const list = (await projectListRes.json()) as Project[];
+        const match = nearestPlace(list, coords, 150);
+        if (match) {
+          setUploadError(`Auto-assigned to ${match.place.name} (${Math.round(match.distance)}m away).`);
+          await uploadWithProject(match.place.id);
+          return;
+        }
+      }
+    } catch {
+      // Permission denied, timeout, etc — silently fall through to the picker.
+    }
+
+    // No nearby project — show the manual picker as before.
+    setShowProjectModal(true);
+    fetchProjects();
   }
 
   async function uploadWithProject(projectId: string | null) {
