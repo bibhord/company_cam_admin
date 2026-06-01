@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MobileHeader } from './components/mobile-header';
 import { MobileAnnotationModal } from './components/mobile-annotation-modal';
+import { BeforeAfterSlider } from './components/before-after-slider';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
 
@@ -16,6 +17,7 @@ interface Photo {
   tags?: string[] | null;
   notes?: string | null;
   annotations?: AnnotationDoc | null;
+  before_photo_id?: string | null;
 }
 
 function PhotoPreviewWithOverlay({ url, name, annotations }: { url: string; name: string; annotations: AnnotationDoc | null }) {
@@ -48,7 +50,7 @@ function PhotoPreviewWithOverlay({ url, name, annotations }: { url: string; name
   );
 }
 
-function PhotoThumb({ photo, className, iconClassName }: { photo: Photo; className: string; iconClassName: string }) {
+function PhotoThumb({ photo, className, iconClassName, pairRole }: { photo: Photo; className: string; iconClassName: string; pairRole?: 'before' | 'after' }) {
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const hasAnnotations = !!photo.annotations && photo.annotations.shapes.length > 0;
   if (!photo.signed_url) {
@@ -82,6 +84,14 @@ function PhotoThumb({ photo, className, iconClassName }: { photo: Photo; classNa
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
           </svg>
+        </span>
+      )}
+      {pairRole && (
+        <span
+          aria-label={`Pair: ${pairRole}`}
+          className="absolute left-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white shadow-sm"
+        >
+          {pairRole === 'before' ? 'B' : 'A'}
         </span>
       )}
     </div>
@@ -137,6 +147,50 @@ export default function PhotosPage() {
   const [editNotes, setEditNotes] = useState('');
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [pairPickerOpen, setPairPickerOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [pairBusy, setPairBusy] = useState(false);
+  const [pairError, setPairError] = useState<string | null>(null);
+
+  const photoById = useMemo(() => {
+    const m = new Map<string, Photo>();
+    for (const p of photos) m.set(p.id, p);
+    return m;
+  }, [photos]);
+  const afterByBeforeId = useMemo(() => {
+    const m = new Map<string, Photo>();
+    for (const p of photos) if (p.before_photo_id) m.set(p.before_photo_id, p);
+    return m;
+  }, [photos]);
+
+  async function patchPair(beforePhotoId: string | null) {
+    if (!selectedPhoto) return;
+    setPairBusy(true);
+    setPairError(null);
+    try {
+      const res = await fetch(`/api/m/photos/${selectedPhoto.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ before_photo_id: beforePhotoId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? 'Unable to update pair.');
+      }
+      const updated = await res.json();
+      setSelectedPhoto((curr) =>
+        curr && curr.id === updated.id ? { ...curr, before_photo_id: updated.before_photo_id ?? null } : curr,
+      );
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === updated.id ? { ...p, before_photo_id: updated.before_photo_id ?? null } : p)),
+      );
+      setPairPickerOpen(false);
+    } catch (err) {
+      setPairError(err instanceof Error ? err.message : 'Unable to update pair.');
+    } finally {
+      setPairBusy(false);
+    }
+  }
 
   function openEditDetails() {
     if (!selectedPhoto) return;
@@ -418,7 +472,12 @@ export default function PhotosPage() {
                 onClick={() => setSelectedPhoto(photo)}
                 className="flex w-full items-center gap-3 rounded-xl bg-white p-3 shadow-sm text-left"
               >
-                <PhotoThumb photo={photo} className="h-14 w-14 shrink-0 overflow-hidden rounded-lg" iconClassName="h-6 w-6 text-slate-300" />
+                <PhotoThumb
+                  photo={photo}
+                  className="h-14 w-14 shrink-0 overflow-hidden rounded-lg"
+                  iconClassName="h-6 w-6 text-slate-300"
+                  pairRole={photo.before_photo_id ? 'after' : afterByBeforeId.has(photo.id) ? 'before' : undefined}
+                />
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-900">{photo.name}</p>
                   {photo.project_name && (
@@ -437,7 +496,12 @@ export default function PhotosPage() {
                 onClick={() => setSelectedPhoto(photo)}
                 className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
               >
-                <PhotoThumb photo={photo} className="absolute inset-0" iconClassName="h-8 w-8 text-slate-300" />
+                <PhotoThumb
+                  photo={photo}
+                  className="absolute inset-0"
+                  iconClassName="h-8 w-8 text-slate-300"
+                  pairRole={photo.before_photo_id ? 'after' : afterByBeforeId.has(photo.id) ? 'before' : undefined}
+                />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
                   <p className="truncate text-xs font-medium text-white">{photo.name}</p>
                 </div>
@@ -583,6 +647,70 @@ export default function PhotosPage() {
                     })}
                   </span>
                 </div>
+
+                {/* Before/After pair status */}
+                {(() => {
+                  const beforePhoto = selectedPhoto.before_photo_id ? photoById.get(selectedPhoto.before_photo_id) ?? null : null;
+                  const afterPhoto = afterByBeforeId.get(selectedPhoto.id) ?? null;
+                  const partner = beforePhoto ?? afterPhoto ?? null;
+                  if (partner) {
+                    const role = beforePhoto ? 'After' : 'Before';
+                    return (
+                      <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2">
+                        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">{role.toUpperCase()}</span>
+                        <span className="flex-1 truncate text-sm text-violet-900">Paired with {partner.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setComparisonOpen(true)}
+                          className="text-xs font-semibold text-violet-700 active:text-violet-800"
+                        >
+                          Compare
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Unpair: clear the after side. If this photo is the before, also clear from after.
+                            if (beforePhoto) void patchPair(null);
+                            else if (afterPhoto) void (async () => {
+                              setPairBusy(true);
+                              setPairError(null);
+                              try {
+                                const res = await fetch(`/api/m/photos/${afterPhoto.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ before_photo_id: null }),
+                                });
+                                if (!res.ok) throw new Error('Unable to unpair.');
+                                setPhotos((prev) => prev.map((p) => (p.id === afterPhoto.id ? { ...p, before_photo_id: null } : p)));
+                              } catch (err) {
+                                setPairError(err instanceof Error ? err.message : 'Unable to unpair.');
+                              } finally {
+                                setPairBusy(false);
+                              }
+                            })();
+                          }}
+                          disabled={pairBusy}
+                          className="text-xs text-violet-500 active:text-violet-700 disabled:opacity-50"
+                        >
+                          Unpair
+                        </button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => { setPairError(null); setPairPickerOpen(true); }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 py-2.5 text-sm font-semibold text-violet-700 transition-colors active:bg-violet-100"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15M9 12l2 2 4-4m-3-6.75h.008v.008H12V2.25Z" />
+                      </svg>
+                      Mark as After of…
+                    </button>
+                  );
+                })()}
+                {pairError && <p className="text-xs text-red-600">{pairError}</p>}
               </div>
 
               {editingDetails ? (
@@ -682,6 +810,73 @@ export default function PhotosPage() {
           }}
         />
       )}
+
+      {/* Before-photo picker */}
+      {pairPickerOpen && selectedPhoto && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/40" onClick={() => setPairPickerOpen(false)}>
+          <div className="w-full max-w-lg rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+              <h3 className="text-base font-semibold text-slate-900">Pick the &quot;before&quot; photo</h3>
+              <button onClick={() => setPairPickerOpen(false)} className="rounded-full p-1 text-slate-400">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-3">
+              {(() => {
+                const candidates = photos.filter(
+                  (p) => p.id !== selectedPhoto.id && !afterByBeforeId.has(p.id) && p.project_id === selectedPhoto.project_id,
+                );
+                if (candidates.length === 0) {
+                  return (
+                    <p className="px-2 py-6 text-center text-sm text-slate-500">
+                      No eligible photos in this project. The before photo must be in the same project and not already paired.
+                    </p>
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-3 gap-2">
+                    {candidates.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => void patchPair(p.id)}
+                        disabled={pairBusy}
+                        className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 disabled:opacity-50"
+                      >
+                        {p.signed_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.signed_url} alt={p.name} className="h-full w-full object-cover" />
+                        ) : null}
+                        <span className="absolute inset-x-0 bottom-0 bg-black/50 px-1.5 py-1 text-left text-[10px] font-medium text-white">
+                          {p.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+              {pairError && <p className="mt-2 text-xs text-red-600">{pairError}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Before/after comparison slider */}
+      {comparisonOpen && selectedPhoto && (() => {
+        const beforePhoto = selectedPhoto.before_photo_id ? photoById.get(selectedPhoto.before_photo_id) ?? null : null;
+        const afterPhoto = afterByBeforeId.get(selectedPhoto.id) ?? null;
+        const before = beforePhoto ?? selectedPhoto;
+        const after = beforePhoto ? selectedPhoto : afterPhoto;
+        if (!after || !before.signed_url || !after.signed_url) return null;
+        return (
+          <BeforeAfterSlider
+            beforeUrl={before.signed_url}
+            afterUrl={after.signed_url}
+            beforeLabel={before.name}
+            afterLabel={after.name}
+            onClose={() => setComparisonOpen(false)}
+          />
+        );
+      })()}
 
       {/* Project Assignment Modal */}
       {showProjectModal && (

@@ -42,6 +42,27 @@ export async function PATCH(
   if (typeof body.name === 'string') updates.name = body.name.trim();
   if (typeof body.notes === 'string') updates.notes = body.notes.trim() || null;
   if (body.project_id !== undefined) updates.project_id = body.project_id || null;
+  if (body.before_photo_id !== undefined) {
+    if (body.before_photo_id === null) {
+      updates.before_photo_id = null;
+    } else if (typeof body.before_photo_id === 'string') {
+      if (body.before_photo_id === id) {
+        return NextResponse.json({ error: 'A photo cannot be paired with itself.' }, { status: 400 });
+      }
+      // Confirm the proposed "before" lives in the same org so we don't
+      // leak cross-org references through the FK.
+      const { data: target } = await supabase
+        .from('photos')
+        .select('id')
+        .eq('id', body.before_photo_id)
+        .eq('org_id', profile.org_id)
+        .maybeSingle();
+      if (!target) {
+        return NextResponse.json({ error: 'Before photo not found.' }, { status: 404 });
+      }
+      updates.before_photo_id = body.before_photo_id;
+    }
+  }
   if (typeof body.tags === 'string') {
     updates.tags = body.tags
       .split(',')
@@ -60,7 +81,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('org_id', profile.org_id)
-    .select('id, name, notes, tags')
+    .select('id, name, notes, tags, before_photo_id')
     .single();
 
   if (updateError) {
