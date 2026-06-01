@@ -5,6 +5,7 @@ import { MobileHeader } from './components/mobile-header';
 import { MobileAnnotationModal } from './components/mobile-annotation-modal';
 import { BeforeAfterSlider } from './components/before-after-slider';
 import { DictationButton } from './components/dictation-button';
+import { enqueueUpload, flushQueue, getPending } from '@/lib/upload-queue';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
 
@@ -252,6 +253,43 @@ export default function PhotosPage() {
     fetchPhotos();
   }, []);
 
+  const [pendingCount, setPendingCount] = useState(0);
+  const [flushBusy, setFlushBusy] = useState(false);
+
+  async function refreshPendingCount() {
+    try {
+      const items = await getPending();
+      setPendingCount(items.length);
+    } catch {
+      // best-effort; IndexedDB unavailable in some private modes
+    }
+  }
+
+  async function runFlush() {
+    setFlushBusy(true);
+    try {
+      const result = await flushQueue();
+      if (result.uploaded > 0) await fetchPhotos();
+      setPendingCount(result.remaining);
+    } finally {
+      setFlushBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    void refreshPendingCount();
+    void runFlush();
+    const onOnline = () => { void runFlush(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') void runFlush(); };
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function fetchProjects() {
     setLoadingProjects(true);
     try {
@@ -293,13 +331,33 @@ export default function PhotosPage() {
     setUploading(true);
     setUploadError(null);
 
+    const file = pendingFile;
+    const trimmedName = photoName.trim();
+
+    async function queueForLater(reason: string) {
+      try {
+        await enqueueUpload(file, trimmedName || file.name.replace(/\.[^.]+$/, ''), projectId);
+        await refreshPendingCount();
+        setUploadError(`Saved offline — will sync when back online (${reason}).`);
+      } catch (err) {
+        setUploadError(`Couldn't save offline: ${err instanceof Error ? err.message : 'storage unavailable'}.`);
+      }
+    }
+
+    // If we're already offline, skip the network attempt.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      await queueForLater('no connection');
+      setUploading(false);
+      setPendingFile(null);
+      return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append('file', pendingFile);
+      formData.append('file', file);
       if (projectId) {
         formData.append('projectId', projectId);
       }
-      const trimmedName = photoName.trim();
       if (trimmedName) {
         formData.append('photoName', trimmedName);
       }
@@ -311,13 +369,17 @@ export default function PhotosPage() {
 
       if (res.ok) {
         await fetchPhotos();
+      } else if (res.status >= 500 || res.status === 408) {
+        // Server unavailable / timeout — keep the photo and retry later.
+        await queueForLater(`server ${res.status}`);
       } else {
         const data = await res.json().catch(() => ({}));
         const msg = data.error || `Upload failed (${res.status})`;
         setUploadError(msg);
       }
     } catch (err) {
-      setUploadError(`Upload error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      // Network error — almost certainly transient, queue and move on.
+      await queueForLater(err instanceof Error ? err.message : 'network error');
     } finally {
       setUploading(false);
       setPendingFile(null);
@@ -396,6 +458,25 @@ export default function PhotosPage() {
   return (
     <div className="flex flex-col">
       <MobileHeader title="Capture Your Work" />
+
+      {/* Offline queue banner */}
+      {pendingCount > 0 && (
+        <div className="mx-4 mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span className="flex items-center gap-2">
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            {pendingCount} photo{pendingCount !== 1 ? 's' : ''} waiting to sync
+          </span>
+          <button
+            onClick={() => void runFlush()}
+            disabled={flushBusy}
+            className="rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          >
+            {flushBusy ? 'Syncing…' : 'Retry'}
+          </button>
+        </div>
+      )}
 
       {/* View toggle */}
       <div className="px-4 pt-4 pb-2">
