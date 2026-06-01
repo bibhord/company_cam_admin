@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { MobileHeader } from '../../components/mobile-header';
+import { ShareProjectButton } from './share-project-button';
 
 interface ProjectPhoto {
   id: string;
@@ -248,6 +249,7 @@ export default function ProjectDetailPage() {
               <span>Updated {timeAgo(project.updated_at)}</span>
             </div>
           </div>
+          <ShareProjectButton projectId={project.id} projectName={project.name} />
         </div>
 
         {/* Tabs */}
