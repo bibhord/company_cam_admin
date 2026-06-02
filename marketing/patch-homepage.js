@@ -184,7 +184,15 @@ function patch(html) {
     '<span class="text-[9px] text-white">Team</span>'
   );
 
-  // ── 12. Inject Crisp chat widget ─────────────────────────────────────────
+  // ── 12. Hide pricing while we collect user input ─────────────────────────
+  // Remove the entire <section id="pricing"> ... </section> block. The
+  // pattern is non-greedy and DOTALL-safe via [\s\S].
+  out = out.replace(/<section[^>]*id=["']pricing["'][^>]*>[\s\S]*?<\/section>/i, '');
+  // Drop nav links and any other anchors pointing at the pricing anchor.
+  out = out.replace(/<a[^>]*href=["']#pricing["'][^>]*>[\s\S]*?<\/a>/gi, '');
+  out = out.replace(/<li[^>]*>\s*<a[^>]*href=["']#pricing["'][^>]*>[\s\S]*?<\/a>\s*<\/li>/gi, '');
+
+  // ── 13. Inject Crisp chat widget ─────────────────────────────────────────
   const crispScript = `
   <!-- Crisp Chat -->
   <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="51fc2e33-c7e4-4f06-8e74-937fab1f1b1b";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>`;

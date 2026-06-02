@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 const PRO_FEATURES = [
   'Unlimited photos',
@@ -12,6 +13,11 @@ const PRO_FEATURES = [
 ];
 
 export default function UpgradePage() {
+  // Hidden while we collect user input on pricing. Remove this redirect
+  // to expose the upgrade card again — the rest of the page stays intact.
+  redirect('/admin/projects');
+
+  // eslint-disable-next-line no-unreachable
   const checkoutUrl = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO;
   const ctaHref = checkoutUrl || 'mailto:hello@captureyourwork.com?subject=Upgrade to Pro';
 
