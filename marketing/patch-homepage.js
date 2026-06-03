@@ -192,7 +192,43 @@ function patch(html) {
   out = out.replace(/<a[^>]*href=["']#pricing["'][^>]*>[\s\S]*?<\/a>/gi, '');
   out = out.replace(/<li[^>]*>\s*<a[^>]*href=["']#pricing["'][^>]*>[\s\S]*?<\/a>\s*<\/li>/gi, '');
 
-  // ── 13. Inject Crisp chat widget ─────────────────────────────────────────
+  // ── 13. Demo portfolios — show prospects what other contractors built ──
+  const demoSection = `
+  <!-- Demo portfolios -->
+  <section id="demos" style="background:#fff;padding:4rem 1.5rem;text-align:center;">
+    <p style="font-size:0.75rem;color:#f59e0b;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:0.5rem;">See it in action</p>
+    <h2 style="font-size:clamp(1.5rem,4vw,2rem);font-weight:800;color:#0f172a;margin-bottom:0.5rem;">Real portfolios, real trades</h2>
+    <p style="color:#64748b;max-width:560px;margin:0 auto 2.5rem;">Browse live demos from a hair stylist, a landscaper, and a plumber. Every page is built with the same tools you'll use.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;max-width:900px;margin:0 auto;">
+      <a href="https://demo-hairstylist.captureyourwork.com" style="display:block;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;text-decoration:none;color:inherit;transition:border-color .15s;">
+        <p style="font-size:0.7rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 0.5rem;">Hair Stylist</p>
+        <h3 style="font-size:1.1rem;font-weight:700;color:#0f172a;margin:0 0 0.4rem;">Bella's Hair Studio</h3>
+        <p style="font-size:0.85rem;color:#64748b;margin:0 0 0.75rem;">Bridal, color transformations, mens cuts.</p>
+        <p style="font-size:0.85rem;color:#f59e0b;font-weight:600;margin:0;">View portfolio →</p>
+      </a>
+      <a href="https://demo-landscaper.captureyourwork.com" style="display:block;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;text-decoration:none;color:inherit;transition:border-color .15s;">
+        <p style="font-size:0.7rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 0.5rem;">Landscaper</p>
+        <h3 style="font-size:1.1rem;font-weight:700;color:#0f172a;margin:0 0 0.4rem;">GreenScape Pros</h3>
+        <p style="font-size:0.85rem;color:#64748b;margin:0 0 0.75rem;">Lawns, patios, garden refreshes.</p>
+        <p style="font-size:0.85rem;color:#f59e0b;font-weight:600;margin:0;">View portfolio →</p>
+      </a>
+      <a href="https://demo-plumber.captureyourwork.com" style="display:block;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;text-decoration:none;color:inherit;transition:border-color .15s;">
+        <p style="font-size:0.7rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 0.5rem;">Plumber</p>
+        <h3 style="font-size:1.1rem;font-weight:700;color:#0f172a;margin:0 0 0.4rem;">ProFlow Plumbing</h3>
+        <p style="font-size:0.85rem;color:#64748b;margin:0 0 0.75rem;">Water heaters, leaks, remodels.</p>
+        <p style="font-size:0.85rem;color:#f59e0b;font-weight:600;margin:0;">View portfolio →</p>
+      </a>
+    </div>
+  </section>`;
+  if (!out.includes('id="demos"')) {
+    if (out.includes('</main>')) {
+      out = out.replace('</main>', `${demoSection}\n</main>`);
+    } else {
+      out = out.replace('</body>', `${demoSection}\n</body>`);
+    }
+  }
+
+  // ── 14. Inject Crisp chat widget ─────────────────────────────────────────
   const crispScript = `
   <!-- Crisp Chat -->
   <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="51fc2e33-c7e4-4f06-8e74-937fab1f1b1b";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>`;
