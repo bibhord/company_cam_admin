@@ -187,6 +187,9 @@ const R2_BUCKET = requireEnv('R2_BUCKET');
 const R2_ACCESS_KEY_ID = requireEnv('R2_ACCESS_KEY_ID');
 const R2_SECRET_ACCESS_KEY = requireEnv('R2_SECRET_ACCESS_KEY');
 const UNSPLASH_ACCESS_KEY = requireEnv('UNSPLASH_ACCESS_KEY');
+const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
+const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -231,6 +234,29 @@ async function uploadToR2(buf: Buffer, key: string): Promise<void> {
       ContentType: 'image/jpeg',
     }),
   );
+}
+
+async function registerVercelDomain(host: string): Promise<void> {
+  if (!VERCEL_TOKEN || !VERCEL_PROJECT_ID) {
+    console.warn(`  [vercel] skipping ${host} — VERCEL_TOKEN/VERCEL_PROJECT_ID not set`);
+    return;
+  }
+  const teamQs = VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : '';
+  const res = await fetch(`https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains${teamQs}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: host }),
+  });
+  if (res.ok) {
+    console.log(`  [vercel] added ${host}`);
+    return;
+  }
+  const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
+  if (body?.error?.code === 'domain_already_exists') {
+    console.log(`  [vercel] ${host} already attached`);
+    return;
+  }
+  console.warn(`  [vercel] failed to add ${host}: ${body?.error?.message ?? res.status}`);
 }
 
 // ── Per-vertical seeder ─────────────────────────────────────────────────
@@ -406,6 +432,9 @@ async function seedVertical(key: string, dryRun: boolean) {
       console.log(`    annotated photos[2]`);
     }
   }
+
+  // 5. Register the subdomain with Vercel so it actually resolves.
+  await registerVercelDomain(`${cfg.slug}.captureyourwork.com`);
 
   console.log(`✓ ${cfg.slug}.captureyourwork.com is live\n`);
 }
