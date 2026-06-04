@@ -4,16 +4,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const SPECIALTIES = [
-  { value: 'general_contractor', label: 'General Contractor', icon: '🏗️' },
-  { value: 'plumber', label: 'Plumber', icon: '🔧' },
-  { value: 'electrician', label: 'Electrician', icon: '⚡' },
-  { value: 'hvac', label: 'HVAC Technician', icon: '❄️' },
-  { value: 'roofer', label: 'Roofer', icon: '🏠' },
-  { value: 'painter', label: 'Painter', icon: '🎨' },
-  { value: 'landscaper', label: 'Landscaper', icon: '🌿' },
-  { value: 'carpenter', label: 'Carpenter', icon: '🪚' },
-  { value: 'mason', label: 'Mason', icon: '🧱' },
-  { value: 'other', label: 'Other', icon: '🔨' },
+  { value: 'general_contractor', label: 'General Contractor', labelEs: 'Contratista General', icon: '🏗️' },
+  { value: 'plumber', label: 'Plumber', labelEs: 'Plomero', icon: '🔧' },
+  { value: 'electrician', label: 'Electrician', labelEs: 'Electricista', icon: '⚡' },
+  { value: 'hvac', label: 'HVAC Technician', labelEs: 'Técnico HVAC', icon: '❄️' },
+  { value: 'roofer', label: 'Roofer', labelEs: 'Techador', icon: '🏠' },
+  { value: 'painter', label: 'Painter', labelEs: 'Pintor', icon: '🎨' },
+  { value: 'landscaper', label: 'Landscaper', labelEs: 'Jardinero', icon: '🌿' },
+  { value: 'carpenter', label: 'Carpenter', labelEs: 'Carpintero', icon: '🪚' },
+  { value: 'mason', label: 'Mason', labelEs: 'Albañil', icon: '🧱' },
+  { value: 'other', label: 'Other', labelEs: 'Otro', icon: '🔨' },
 ];
 
 const LANGUAGES = [
@@ -23,10 +23,13 @@ const LANGUAGES = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'specialty' | 'language'>('specialty');
   const [specialty, setSpecialty] = useState('');
   const [language, setLanguage] = useState('en');
   const [saving, setSaving] = useState(false);
+
+  const labels = language === 'es'
+    ? { title: 'Bienvenido a CaptureYourWork', subtitle: 'Cuéntanos sobre tu trabajo', specialty: '¿Cuál es tu especialidad?', lang: 'Idioma', start: 'Comenzar', saving: 'Guardando...' }
+    : { title: 'Welcome to CaptureYourWork', subtitle: 'Tell us about your work', specialty: 'What is your specialty?', lang: 'Language', start: 'Get Started', saving: 'Saving...' };
 
   async function handleComplete() {
     setSaving(true);
@@ -36,9 +39,7 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ specialty, language }),
       });
-      if (res.ok) {
-        router.push('/m');
-      }
+      if (res.ok) router.push('/m');
     } catch (err) {
       console.error('Onboarding error:', err);
     } finally {
@@ -57,19 +58,35 @@ export default function OnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Welcome to CaptureYourWork</h1>
-          <p className="mt-1 text-sm text-slate-500">Tell us about your work</p>
+          <h1 className="text-xl font-bold text-slate-900">{labels.title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{labels.subtitle}</p>
         </div>
 
-        {/* Progress dots */}
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <div className={`h-2 w-8 rounded-full transition-colors ${step === 'specialty' ? 'bg-amber-500' : 'bg-amber-200'}`} />
-          <div className={`h-2 w-8 rounded-full transition-colors ${step === 'language' ? 'bg-amber-500' : 'bg-amber-200'}`} />
-        </div>
+        <div className="space-y-6">
+          {/* Language — first so UI updates immediately */}
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-slate-900">{labels.lang}</h2>
+            <div className="flex gap-2">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors ${
+                    language === lang.code
+                      ? 'border-amber-500 bg-amber-50 text-amber-700'
+                      : 'border-slate-200 bg-white text-slate-700'
+                  }`}
+                >
+                  <span className="text-xl">{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {step === 'specialty' && (
-          <div className="space-y-4">
-            <h2 className="text-base font-semibold text-slate-900">What is your specialty?</h2>
+          {/* Specialty */}
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-slate-900">{labels.specialty}</h2>
             <div className="grid grid-cols-2 gap-2">
               {SPECIALTIES.map((s) => (
                 <button
@@ -82,72 +99,22 @@ export default function OnboardingPage() {
                   }`}
                 >
                   <span className="text-lg">{s.icon}</span>
-                  <span className="leading-tight">{s.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={() => setStep('language')}
-                className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white shadow-sm transition-colors active:bg-amber-600 disabled:opacity-60"
-              >
-                Continue
-              </button>
-            </div>
-            <button
-              onClick={() => { setSpecialty(''); setStep('language'); }}
-              className="w-full text-center text-sm text-slate-400 active:text-slate-600"
-            >
-              Skip
-            </button>
-          </div>
-        )}
-
-        {step === 'language' && (
-          <div className="space-y-4">
-            <h2 className="text-base font-semibold text-slate-900">Select your language</h2>
-            <div className="space-y-2">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors ${
-                    language === lang.code
-                      ? 'border-amber-500 bg-amber-50'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <span className="text-2xl">{lang.flag}</span>
-                  <span className={`text-sm font-medium ${language === lang.code ? 'text-amber-700' : 'text-slate-700'}`}>
-                    {lang.label}
+                  <span className="leading-tight">
+                    {language === 'es' ? s.labelEs : s.label}
                   </span>
-                  {language === lang.code && (
-                    <svg className="ml-auto h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                    </svg>
-                  )}
                 </button>
               ))}
             </div>
-
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={() => setStep('specialty')}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleComplete}
-                disabled={saving}
-                className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white shadow-sm transition-colors active:bg-amber-600 disabled:opacity-60"
-              >
-                {saving ? 'Saving...' : 'Get Started'}
-              </button>
-            </div>
           </div>
-        )}
+
+          <button
+            onClick={handleComplete}
+            disabled={saving}
+            className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white shadow-sm transition-colors active:bg-amber-600 disabled:opacity-60"
+          >
+            {saving ? labels.saving : labels.start}
+          </button>
+        </div>
       </div>
     </div>
   );
