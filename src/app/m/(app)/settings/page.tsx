@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { MobileHeader } from '../components/mobile-header';
 import { openCrispChat } from '../components/crisp-mobile-manager';
+import { useLocale } from '@/lib/i18n';
 
 interface UserProfile {
   first_name: string | null;
@@ -36,6 +37,7 @@ const SPECIALTIES = [
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const { t } = useLocale();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [savingPref, setSavingPref] = useState(false);
@@ -124,7 +126,7 @@ export default function SettingsPage() {
 
   const menuItems = [
     {
-      label: 'My Photos',
+      label: t('settings.myPhotos'),
       href: '/m',
       icon: (
         <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -133,7 +135,7 @@ export default function SettingsPage() {
       ),
     },
     {
-      label: 'Notification Settings',
+      label: t('settings.notificationSettings'),
       href: '/admin/settings/notifications',
       icon: (
         <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -142,7 +144,7 @@ export default function SettingsPage() {
       ),
     },
     {
-      label: 'Company Settings',
+      label: t('settings.companySettings'),
       href: '/admin/settings/company',
       icon: (
         <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -154,7 +156,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col">
-      <MobileHeader title="Settings" />
+      <MobileHeader title={t('settings.title')} />
 
       <div className="p-4 space-y-6">
         {/* User info */}
@@ -175,7 +177,7 @@ export default function SettingsPage() {
         {/* Language selector */}
         <div className="rounded-xl bg-white shadow-sm overflow-hidden">
           <div className="px-4 pt-3 pb-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Language</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('settings.language')}</p>
           </div>
           {LANGUAGES.map((lang, idx) => (
             <button
@@ -200,7 +202,7 @@ export default function SettingsPage() {
         {/* Specialty selector */}
         <div className="rounded-xl bg-white shadow-sm overflow-hidden">
           <div className="px-4 pt-3 pb-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Specialty</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('settings.specialty')}</p>
           </div>
           <div className="px-4 py-2">
             <select
@@ -277,7 +279,7 @@ export default function SettingsPage() {
           disabled={signingOut}
           className="w-full rounded-xl border border-slate-200 bg-white py-3 text-sm font-semibold text-red-500 shadow-sm transition-colors active:bg-slate-50 disabled:opacity-60"
         >
-          {signingOut ? 'Signing Out...' : 'Sign Out'}
+          {signingOut ? t('settings.signingOut') : t('settings.signOut')}
         </button>
 
         {/* Delete account */}

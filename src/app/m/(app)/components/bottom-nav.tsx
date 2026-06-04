@@ -1,11 +1,19 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocale } from '@/lib/i18n';
 
-const tabs = [
+type Tab = {
+  key: string;
+  href: string;
+  icon: (active: boolean) => ReactNode;
+};
+
+const TAB_DEFS: Tab[] = [
   {
-    label: 'Recent',
+    key: 'recent',
     href: '/m',
     icon: (active: boolean) => (
       <svg
@@ -24,7 +32,7 @@ const tabs = [
     ),
   },
   {
-    label: 'Projects',
+    key: 'projects',
     href: '/m/projects',
     icon: (active: boolean) => (
       <svg
@@ -43,7 +51,7 @@ const tabs = [
     ),
   },
   {
-    label: 'Services',
+    key: 'services',
     href: '/m/services',
     icon: (active: boolean) => (
       <svg
@@ -62,7 +70,7 @@ const tabs = [
     ),
   },
   {
-    label: 'Bookings',
+    key: 'bookings',
     href: '/m/bookings',
     icon: (active: boolean) => (
       <svg
@@ -81,7 +89,7 @@ const tabs = [
     ),
   },
   {
-    label: 'Settings',
+    key: 'settings',
     href: '/m/settings',
     icon: (active: boolean) => (
       <svg
@@ -106,8 +114,17 @@ const tabs = [
   },
 ];
 
+const NAV_LABEL_KEYS: Record<string, string> = {
+  recent: 'common.nav.recent',
+  projects: 'common.nav.projects',
+  services: 'common.nav.services',
+  bookings: 'common.nav.bookings',
+  settings: 'common.nav.settings',
+};
+
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   function isActive(href: string) {
     if (href === '/m') {
@@ -119,7 +136,7 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center justify-around">
-        {tabs.map((tab) => {
+        {TAB_DEFS.map((tab) => {
           const active = isActive(tab.href);
           return (
             <Link
@@ -133,7 +150,7 @@ export function BottomNav() {
                   active ? 'text-amber-500' : 'text-slate-400'
                 }`}
               >
-                {tab.label}
+                {t(NAV_LABEL_KEYS[tab.key])}
               </span>
             </Link>
           );

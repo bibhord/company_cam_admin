@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useLocale } from '@/lib/i18n';
 
 type BookingStatus = 'pending' | 'confirmed' | 'declined' | 'cancelled';
 
@@ -26,11 +27,11 @@ interface Props {
 
 type TabFilter = 'all' | 'pending' | 'confirmed' | 'declined';
 
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  declined: 'Declined',
-  cancelled: 'Cancelled',
+const STATUS_LABEL_KEYS: Record<BookingStatus, string> = {
+  pending: 'bookings.pending',
+  confirmed: 'bookings.confirmed',
+  declined: 'bookings.declined',
+  cancelled: 'bookings.cancelled',
 };
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
@@ -90,6 +91,7 @@ function BottomSheet({
 }
 
 export function BookingsMobile({ initialBookings, canManage }: Props) {
+  const { t } = useLocale();
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [tab, setTab] = useState<TabFilter>('pending');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -126,10 +128,10 @@ export function BookingsMobile({ initialBookings, canManage }: Props) {
   }
 
   const tabs: { key: TabFilter; label: string }[] = [
-    { key: 'pending', label: 'Pending' },
-    { key: 'confirmed', label: 'Confirmed' },
-    { key: 'all', label: 'All' },
-    { key: 'declined', label: 'Declined' },
+    { key: 'pending', label: t('bookings.pending') },
+    { key: 'confirmed', label: t('bookings.confirmed') },
+    { key: 'all', label: t('bookings.all') },
+    { key: 'declined', label: t('bookings.declined') },
   ];
 
   return (
@@ -137,10 +139,10 @@ export function BookingsMobile({ initialBookings, canManage }: Props) {
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 pt-safe">
         <div className="flex items-center justify-between py-3">
-          <h1 className="text-lg font-bold text-slate-900">Bookings</h1>
+          <h1 className="text-lg font-bold text-slate-900">{t('bookings.title')}</h1>
           {pendingCount > 0 && (
             <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
-              {pendingCount} pending
+              {t('bookings.pendingCount').replace('{{count}}', String(pendingCount))}
             </span>
           )}
         </div>
@@ -174,7 +176,7 @@ export function BookingsMobile({ initialBookings, canManage }: Props) {
       <div className="p-4 space-y-3">
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <p className="text-sm font-medium text-slate-600">No bookings</p>
+            <p className="text-sm font-medium text-slate-600">{t('bookings.noBookings')}</p>
             <p className="mt-1 text-xs text-slate-400">
               {tab === 'all' ? 'Bookings appear here once submitted.' : `No ${tab} bookings.`}
             </p>
@@ -211,7 +213,7 @@ export function BookingsMobile({ initialBookings, canManage }: Props) {
                       STATUS_COLORS[b.status]
                     }`}
                   >
-                    {STATUS_LABELS[b.status]}
+                    {t(STATUS_LABEL_KEYS[b.status])}
                   </span>
                   {canManage && b.status === 'pending' && (
                     <svg className="mt-1 h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

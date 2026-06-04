@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MobileHeader } from '../components/mobile-header';
+import { useLocale } from '@/lib/i18n';
 
 type ProjectStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed';
 
@@ -17,31 +18,32 @@ interface Project {
   updated_at: string;
 }
 
-const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: string; order: number }> = {
-  blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-50', order: 0 },
-  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50', order: 1 },
-  not_started: { label: 'Not Started', color: 'text-slate-600', bg: 'bg-slate-100', order: 2 },
-  completed: { label: 'Completed', color: 'text-emerald-600', bg: 'bg-emerald-50', order: 3 },
+const STATUS_CONFIG: Record<ProjectStatus, { labelKey: string; color: string; bg: string; order: number }> = {
+  blocked: { labelKey: 'projects.status.blocked', color: 'text-red-600', bg: 'bg-red-50', order: 0 },
+  in_progress: { labelKey: 'projects.status.inProgress', color: 'text-blue-600', bg: 'bg-blue-50', order: 1 },
+  not_started: { labelKey: 'projects.status.notStarted', color: 'text-slate-600', bg: 'bg-slate-100', order: 2 },
+  completed: { labelKey: 'projects.status.completed', color: 'text-emerald-600', bg: 'bg-emerald-50', order: 3 },
 };
 
 type SortKey = 'name' | 'status';
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string) => string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diff = now - then;
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('common.time.justNow');
+  if (minutes < 60) return t('common.time.minutesAgo').replace('{{count}}', String(minutes));
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('common.time.hoursAgo').replace('{{count}}', String(hours));
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t('common.time.daysAgo').replace('{{count}}', String(days));
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t('common.time.monthsAgo').replace('{{count}}', String(months));
 }
 
 export default function ProjectsPage() {
+  const { t } = useLocale();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -99,7 +101,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex flex-col">
-      <MobileHeader title="Projects" />
+      <MobileHeader title={t('projects.title')} />
 
       <div className="px-4 pt-4 space-y-3">
         {/* Search */}
@@ -119,7 +121,7 @@ export default function ProjectsPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search projects..."
+            placeholder={t('projects.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -137,7 +139,7 @@ export default function ProjectsPage() {
                   : 'text-slate-600'
               }`}
             >
-              A-Z
+              {t('projects.sortAZ')}
               {sortBy === 'name' && (
                 <svg className={`h-3 w-3 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
@@ -152,7 +154,7 @@ export default function ProjectsPage() {
                   : 'text-slate-600'
               }`}
             >
-              Status
+              {t('projects.sortStatus')}
               {sortBy === 'status' && (
                 <svg className={`h-3 w-3 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
@@ -222,9 +224,9 @@ export default function ProjectsPage() {
                 />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-900">Map view coming soon</p>
+            <p className="text-sm font-semibold text-slate-900">{t('projects.mapViewComingSoon')}</p>
             <p className="mt-1 text-xs text-slate-500">
-              View your projects on a map
+              {t('projects.mapViewDescription')}
             </p>
           </div>
         ) : filtered.length === 0 ? (
@@ -244,9 +246,9 @@ export default function ProjectsPage() {
                 />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-900">No Projects Found</p>
+            <p className="text-sm font-semibold text-slate-900">{t('projects.noProjectsFound')}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {search ? 'Try a different search term' : 'No projects have been created yet'}
+              {search ? t('projects.tryDifferentSearch') : t('projects.noProjectsCreated')}
             </p>
           </div>
         ) : (
@@ -289,14 +291,14 @@ export default function ProjectsPage() {
                   <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
                     <span>{project.photo_count} photo{project.photo_count !== 1 ? 's' : ''}</span>
                     <span>&middot;</span>
-                    <span>{timeAgo(project.updated_at)}</span>
+                    <span>{timeAgo(project.updated_at, t)}</span>
                   </div>
                 </div>
 
                 {/* Status badge + Chevron */}
                 <div className="flex shrink-0 items-center gap-2">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_CONFIG[project.status ?? 'not_started'].bg} ${STATUS_CONFIG[project.status ?? 'not_started'].color}`}>
-                    {STATUS_CONFIG[project.status ?? 'not_started'].label}
+                    {t(STATUS_CONFIG[project.status ?? 'not_started'].labelKey)}
                   </span>
                   <svg
                     className="h-4 w-4 text-slate-300"

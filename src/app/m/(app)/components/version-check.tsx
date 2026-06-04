@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocale } from '@/lib/i18n';
 
 const POLL_INTERVAL = 30_000; // Check every 30 seconds
 const VISIBILITY_CHECK = true; // Also check when app comes to foreground
@@ -8,6 +9,7 @@ const VISIBILITY_CHECK = true; // Also check when app comes to foreground
 export function VersionCheck() {
   const knownVersion = useRef<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const { t } = useLocale();
 
   const checkVersion = useCallback(async () => {
     try {
@@ -63,12 +65,12 @@ export function VersionCheck() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-500 px-4 py-2.5 text-center safe-top">
       <div className="flex items-center justify-center gap-3">
-        <p className="text-sm font-medium text-white">New version available</p>
+        <p className="text-sm font-medium text-white">{t('versionCheck.newVersionAvailable')}</p>
         <button
           onClick={handleUpdate}
           className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-600 shadow-sm active:bg-amber-50"
         >
-          Update Now
+          {t('versionCheck.updateNow')}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { MobileHeader } from '../../components/mobile-header';
 import { ShareProjectButton } from './share-project-button';
 import { getCurrentCoords } from '@/lib/geo';
+import { useLocale } from '@/lib/i18n';
 
 interface ProjectPhoto {
   id: string;
@@ -30,31 +31,32 @@ interface Project {
   photos: ProjectPhoto[];
 }
 
-const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: string }> = {
-  not_started: { label: 'Not Started', color: 'text-slate-600', bg: 'bg-slate-100' },
-  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50' },
-  blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-50' },
-  completed: { label: 'Completed', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+const STATUS_CONFIG: Record<ProjectStatus, { labelKey: string; color: string; bg: string }> = {
+  not_started: { labelKey: 'projects.status.notStarted', color: 'text-slate-600', bg: 'bg-slate-100' },
+  in_progress: { labelKey: 'projects.status.inProgress', color: 'text-blue-600', bg: 'bg-blue-50' },
+  blocked: { labelKey: 'projects.status.blocked', color: 'text-red-600', bg: 'bg-red-50' },
+  completed: { labelKey: 'projects.status.completed', color: 'text-emerald-600', bg: 'bg-emerald-50' },
 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string) => string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diff = now - then;
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('common.time.justNow');
+  if (minutes < 60) return t('common.time.minutesAgo').replace('{{count}}', String(minutes));
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('common.time.hoursAgo').replace('{{count}}', String(hours));
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t('common.time.daysAgo').replace('{{count}}', String(days));
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t('common.time.monthsAgo').replace('{{count}}', String(months));
 }
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const { t } = useLocale();
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export default function ProjectDetailPage() {
 
   async function handleDeletePhoto() {
     if (!editingPhoto) return;
-    if (!confirm('Delete this photo? This cannot be undone.')) return;
+    if (!confirm(t('projects.detail.deleteConfirm'))) return;
     setDeletingPhoto(true);
     try {
       const res = await fetch(`/api/m/photos/${editingPhoto.id}`, {
@@ -243,13 +245,13 @@ export default function ProjectDetailPage() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_CONFIG[project.status ?? 'not_started'].bg} ${STATUS_CONFIG[project.status ?? 'not_started'].color}`}>
-                {STATUS_CONFIG[project.status ?? 'not_started'].label}
+                {t(STATUS_CONFIG[project.status ?? 'not_started'].labelKey)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span>{project.photo_count} photo{project.photo_count !== 1 ? 's' : ''}</span>
               <span>&middot;</span>
-              <span>Updated {timeAgo(project.updated_at)}</span>
+              <span>Updated {timeAgo(project.updated_at, t)}</span>
             </div>
           </div>
           <ShareProjectButton projectId={project.id} projectName={project.name} />
@@ -263,7 +265,7 @@ export default function ProjectDetailPage() {
               tab === 'photos' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600'
             }`}
           >
-            Photos ({project.photos.length})
+            {t('projects.detail.photosTab')} ({project.photos.length})
           </button>
           <button
             onClick={() => setTab('details')}
@@ -271,7 +273,7 @@ export default function ProjectDetailPage() {
               tab === 'details' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600'
             }`}
           >
-            Details
+            {t('projects.detail.detailsTab')}
           </button>
         </div>
 
@@ -285,8 +287,8 @@ export default function ProjectDetailPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-slate-900">No photos yet</p>
-                <p className="mt-1 text-xs text-slate-500">Add photos to this project</p>
+                <p className="text-sm font-medium text-slate-900">{t('projects.detail.noPhotosYet')}</p>
+                <p className="mt-1 text-xs text-slate-500">{t('projects.detail.addPhotosPrompt')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
@@ -307,7 +309,7 @@ export default function ProjectDetailPage() {
                     )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
                       <p className="truncate text-xs font-medium text-white">{photo.name}</p>
-                      <p className="text-[10px] text-white/70">{timeAgo(photo.created_at)}</p>
+                      <p className="text-[10px] text-white/70">{timeAgo(photo.created_at, t)}</p>
                     </div>
                   </button>
                 ))}
@@ -326,7 +328,7 @@ export default function ProjectDetailPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Uploading...
+                  {t('projects.detail.uploading')}
                 </>
               ) : (
                 <>
@@ -334,7 +336,7 @@ export default function ProjectDetailPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                   </svg>
-                  Add Photo to Project
+                  {t('projects.detail.addPhotoToProject')}
                 </>
               )}
             </button>
@@ -352,7 +354,7 @@ export default function ProjectDetailPage() {
         {tab === 'details' && (
           <div className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Project Status
+              {t('projects.detail.projectStatus')}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {(Object.entries(STATUS_CONFIG) as [ProjectStatus, typeof STATUS_CONFIG[ProjectStatus]][]).map(([value, config]) => (
@@ -365,13 +367,13 @@ export default function ProjectDetailPage() {
                       : 'border-slate-200 text-slate-500 bg-white'
                   }`}
                 >
-                  {config.label}
+                  {t(config.labelKey)}
                 </button>
               ))}
             </div>
 
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 pt-2">
-              Project Address
+              {t('projects.detail.projectAddress')}
             </h3>
 
             <div className="relative">
@@ -383,7 +385,7 @@ export default function ProjectDetailPage() {
               </div>
               <input
                 type="text"
-                placeholder="Street Address"
+                placeholder={t('projects.detail.streetAddress')}
                 value={streetAddress}
                 onChange={(e) => setStreetAddress(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -398,7 +400,7 @@ export default function ProjectDetailPage() {
               </div>
               <input
                 type="text"
-                placeholder="City"
+                placeholder={t('projects.detail.city')}
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -413,7 +415,7 @@ export default function ProjectDetailPage() {
               </div>
               <input
                 type="text"
-                placeholder="State / ZIP Code"
+                placeholder={t('projects.detail.stateZip')}
                 value={stateZip}
                 onChange={(e) => setStateZip(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -427,7 +429,7 @@ export default function ProjectDetailPage() {
               disabled={saving}
               className="w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 disabled:opacity-60"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('projects.detail.saving') : t('projects.detail.saveChanges')}
             </button>
           </div>
         )}
@@ -457,7 +459,7 @@ export default function ProjectDetailPage() {
 
             <div className="space-y-3 p-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Photo Name</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">{t('projects.detail.photoName')}</label>
                 <input
                   type="text"
                   value={editName}
@@ -467,11 +469,11 @@ export default function ProjectDetailPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Notes</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">{t('projects.detail.notes')}</label>
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  placeholder="Add notes about this photo..."
+                  placeholder={t('projects.detail.notesPlaceholder')}
                   rows={3}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                 />
@@ -483,14 +485,14 @@ export default function ProjectDetailPage() {
                   disabled={savingPhoto}
                   className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 active:bg-amber-700 disabled:opacity-60"
                 >
-                  {savingPhoto ? 'Saving...' : 'Save'}
+                  {savingPhoto ? t('projects.detail.saving') : t('projects.detail.save')}
                 </button>
                 <button
                   onClick={handleDeletePhoto}
                   disabled={deletingPhoto}
                   className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-500 transition-colors active:bg-red-50 disabled:opacity-60"
                 >
-                  {deletingPhoto ? '...' : 'Delete'}
+                  {deletingPhoto ? '…' : t('projects.detail.delete')}
                 </button>
               </div>
             </div>

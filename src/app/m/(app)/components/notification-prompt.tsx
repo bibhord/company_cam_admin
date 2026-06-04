@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { oneSignalOptIn } from '@/components/onesignal-init';
+import { useLocale } from '@/lib/i18n';
 
 export function NotificationPrompt() {
   const [show, setShow] = useState(false);
+  const { t } = useLocale();
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return; // OneSignalCapacitorInit handles native
@@ -39,8 +41,8 @@ export function NotificationPrompt() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900">Enable Notifications</p>
-            <p className="mt-0.5 text-xs text-slate-500">Get notified about project updates, new photos, and task assignments.</p>
+            <p className="text-sm font-semibold text-slate-900">{t('notifications.enableTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('notifications.enableDescription')}</p>
           </div>
         </div>
         <div className="mt-3 flex gap-2">
@@ -48,13 +50,13 @@ export function NotificationPrompt() {
             onClick={handleAllow}
             className="flex-1 rounded-xl bg-amber-500 py-2 text-sm font-semibold text-white transition-colors active:bg-amber-600"
           >
-            Allow
+            {t('notifications.allow')}
           </button>
           <button
             onClick={() => setShow(false)}
             className="flex-1 rounded-xl border border-slate-200 py-2 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
           >
-            Not Now
+            {t('notifications.notNow')}
           </button>
         </div>
       </div>

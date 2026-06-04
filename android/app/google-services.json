@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "472000104486",
+    "project_id": "captureyourwork",
+    "storage_bucket": "captureyourwork.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:472000104486:android:625507108eacb8435efee7",
+        "android_client_info": {
+          "package_name": "com.kumarillc.captureyourwork"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRHUvB3PxozRdEiFzwBNrx0gdXme8A7to"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

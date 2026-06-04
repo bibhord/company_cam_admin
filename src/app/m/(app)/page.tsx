@@ -9,6 +9,7 @@ import { enqueueUpload, flushQueue, getPending } from '@/lib/upload-queue';
 import { getCurrentCoords, nearestPlace } from '@/lib/geo';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
+import { useLocale } from '@/lib/i18n';
 
 interface Photo {
   id: string;
@@ -108,22 +109,23 @@ interface Project {
   lng?: number | null;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string) => string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diff = now - then;
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('common.time.justNow');
+  if (minutes < 60) return t('common.time.minutesAgo').replace('{{count}}', String(minutes));
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('common.time.hoursAgo').replace('{{count}}', String(hours));
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t('common.time.daysAgo').replace('{{count}}', String(days));
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t('common.time.monthsAgo').replace('{{count}}', String(months));
 }
 
 export default function PhotosPage() {
+  const { t } = useLocale();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'grid'>('list');
@@ -482,7 +484,7 @@ export default function PhotosPage() {
 
   return (
     <div className="flex flex-col">
-      <MobileHeader title="Capture Your Work" />
+      <MobileHeader title={t('photos.captureYourWork')} />
 
       {/* Offline queue banner */}
       {pendingCount > 0 && (
@@ -514,7 +516,7 @@ export default function PhotosPage() {
                 : 'text-slate-600'
             }`}
           >
-            List
+            {t('photos.viewList')}
           </button>
           <button
             onClick={() => setView('grid')}
@@ -524,7 +526,7 @@ export default function PhotosPage() {
                 : 'text-slate-600'
             }`}
           >
-            Grid
+            {t('photos.viewGrid')}
           </button>
         </div>
       </div>
@@ -566,9 +568,9 @@ export default function PhotosPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-900">No Photos Yet</p>
+            <p className="text-sm font-semibold text-slate-900">{t('photos.noPhotosYet')}</p>
             <p className="mt-1 text-center text-xs text-slate-500">
-              Tap the camera button to capture your first job site photo
+              {t('photos.emptyPrompt')}
             </p>
           </div>
         ) : view === 'list' ? (
@@ -590,7 +592,7 @@ export default function PhotosPage() {
                   {photo.project_name && (
                     <p className="truncate text-xs text-slate-500">{photo.project_name}</p>
                   )}
-                  <p className="text-xs text-slate-400">{timeAgo(photo.created_at)}</p>
+                  <p className="text-xs text-slate-400">{timeAgo(photo.created_at, t)}</p>
                 </div>
               </button>
             ))}
@@ -682,13 +684,13 @@ export default function PhotosPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                   </svg>
                   <span className="flex-1 text-sm text-slate-700">
-                    {selectedPhoto.project_name ?? 'No project'}
+                    {selectedPhoto.project_name ?? t('photos.detail.noProject')}
                   </span>
                   <button
                     onClick={openReassign}
                     className="text-xs font-medium text-amber-600 active:text-amber-700"
                   >
-                    {reassigning ? 'Cancel' : 'Change'}
+                    {reassigning ? t('common.actions.cancel') : t('photos.detail.change')}
                   </button>
                 </div>
 
@@ -713,7 +715,7 @@ export default function PhotosPage() {
                           <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                           </svg>
-                          No project
+                          {t('photos.detail.noProject')}
                         </button>
                         {detailProjects.map((p) => (
                           <button
@@ -823,7 +825,7 @@ export default function PhotosPage() {
               {editingDetails ? (
                 <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">{t('projects.detail.photoName')}</label>
                     <input
                       type="text"
                       value={editName}
@@ -843,9 +845,9 @@ export default function PhotosPage() {
                   </div>
                   <div>
                     <div className="mb-1 flex items-center justify-between">
-                      <label className="text-xs font-medium text-slate-600">Notes</label>
+                      <label className="text-xs font-medium text-slate-600">{t('projects.detail.notes')}</label>
                       <DictationButton
-                        onTranscript={(t) => setEditNotes((curr) => (curr ? `${curr.trimEnd()} ${t}` : t))}
+                        onTranscript={(transcript) => setEditNotes((curr) => (curr ? `${curr.trimEnd()} ${transcript}` : transcript))}
                       />
                     </div>
                     <textarea
@@ -865,14 +867,14 @@ export default function PhotosPage() {
                       disabled={savingDetails}
                       className="flex-1 rounded-lg bg-slate-800 py-2 text-sm font-semibold text-white transition-colors active:bg-slate-900 disabled:opacity-60"
                     >
-                      {savingDetails ? 'Saving…' : 'Save'}
+                      {savingDetails ? t('common.actions.loading') + '…' : t('projects.detail.save')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingDetails(false)}
                       className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
                     >
-                      Cancel
+                      {t('common.actions.cancel')}
                     </button>
                   </div>
                 </div>
@@ -902,7 +904,7 @@ export default function PhotosPage() {
                 onClick={() => { setSelectedPhoto(null); setReassigning(false); setEditingDetails(false); }}
                 className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors active:bg-slate-50"
               >
-                Close
+                {t('photos.detail.close')}
               </button>
             </div>
           </div>
@@ -999,7 +1001,7 @@ export default function PhotosPage() {
           >
             {/* Modal header */}
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-              <h3 className="text-base font-semibold text-slate-900">Assign to Project</h3>
+              <h3 className="text-base font-semibold text-slate-900">{t('photos.assignToProject')}</h3>
               <button onClick={closeModal} className="rounded-full p-1 text-slate-400 hover:bg-slate-100">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -1009,10 +1011,10 @@ export default function PhotosPage() {
 
             {/* Photo name */}
             <div className="px-4 pt-3">
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">Photo Name</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">{t('photos.photoName')}</label>
               <input
                 type="text"
-                placeholder="Name this photo..."
+                placeholder={t('photos.photoNamePlaceholder')}
                 value={photoName}
                 onChange={(e) => setPhotoName(e.target.value)}
                 autoFocus
@@ -1028,7 +1030,7 @@ export default function PhotosPage() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search projects..."
+                  placeholder={t('photos.searchProjects')}
                   value={projectSearch}
                   onChange={(e) => setProjectSearch(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -1057,8 +1059,8 @@ export default function PhotosPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-700">Skip — No project</p>
-                      <p className="text-xs text-slate-400">Upload without assigning</p>
+                      <p className="text-sm font-medium text-slate-700">{t('photos.skipNoProject')}</p>
+                      <p className="text-xs text-slate-400">{t('photos.uploadWithoutAssigning')}</p>
                     </div>
                   </button>
 
@@ -1091,7 +1093,7 @@ export default function PhotosPage() {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="New project name"
+                    placeholder={t('photos.newProjectName')}
                     value={newProjectName}
                     onChange={(e) => setNewProjectName(e.target.value)}
                     autoFocus
@@ -1114,7 +1116,7 @@ export default function PhotosPage() {
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  Create New Project
+                  {t('photos.createNewProject')}
                 </button>
               )}
             </div>

@@ -3,7 +3,10 @@
     "nav": {
       "photos": "Fotos",
       "projects": "Proyectos",
-      "settings": "Ajustes"
+      "settings": "Ajustes",
+      "recent": "Recientes",
+      "services": "Servicios",
+      "bookings": "Reservas"
     },
     "actions": {
       "save": "Guardar",
@@ -136,5 +139,18 @@
   "versionCheck": {
     "newVersionAvailable": "Nueva versión disponible",
     "updateNow": "Actualizar ahora"
+  },
+  "bookings": {
+    "title": "Reservas",
+    "pending": "Pendiente",
+    "confirmed": "Confirmado",
+    "declined": "Rechazado",
+    "cancelled": "Cancelado",
+    "all": "Todos",
+    "pendingCount": "{{count}} pendiente(s)",
+    "noBookings": "Sin reservas aún"
+  },
+  "services": {
+    "title": "Servicios"
   }
 }

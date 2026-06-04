@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>CaptureYourWork</string>
+	<string>CaptureYourWork</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -20,10 +20,37 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.captureyourwork.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.captureyourwork.app</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>CaptureYourWork needs camera access to capture job site photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CaptureYourWork tags your job site photos with GPS coordinates to document exact work locations.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CaptureYourWork uses the microphone so you can dictate notes about a photo without typing.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>CaptureYourWork needs permission to save photos to your library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CaptureYourWork needs photo library access to upload job site photos.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CaptureYourWork uses speech recognition to turn your spoken notes into text on photos.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -47,28 +74,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.captureyourwork.app</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.captureyourwork.app</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>CaptureYourWork tags your job site photos with GPS coordinates to document exact work locations.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>CaptureYourWork needs camera access to capture job site photos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>CaptureYourWork needs photo library access to upload job site photos.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>CaptureYourWork needs permission to save photos to your library.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>CaptureYourWork uses the microphone so you can dictate notes about a photo without typing.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>CaptureYourWork uses speech recognition to turn your spoken notes into text on photos.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
