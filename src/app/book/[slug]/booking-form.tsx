@@ -1,6 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: {
+        sitekey: string;
+        callback: (token: string) => void;
+        'expired-callback': () => void;
+        'error-callback': () => void;
+      }) => string;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
 
 interface ServiceRow {
   id: string;
@@ -212,6 +226,50 @@ export function BookingForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Turnstile
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Load Turnstile script once
+  useEffect(() => {
+    if (!siteKey) return;
+    if (document.getElementById('cf-turnstile-script')) return;
+    const script = document.createElement('script');
+    script.id = 'cf-turnstile-script';
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    document.head.appendChild(script);
+  }, [siteKey]);
+
+  // Render/destroy Turnstile widget when entering/leaving details step
+  useEffect(() => {
+    if (!siteKey || step !== 'details') {
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+      }
+      setTurnstileToken(null);
+      return;
+    }
+    const tryRender = () => {
+      if (!turnstileRef.current || !window.turnstile) return false;
+      if (turnstileWidgetId.current) return true;
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: siteKey,
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(null),
+        'error-callback': () => setTurnstileToken(null),
+      });
+      return true;
+    };
+    if (!tryRender()) {
+      const interval = setInterval(() => { if (tryRender()) clearInterval(interval); }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [step, siteKey]);
+
   // Load business hours to know which days are closed
   useEffect(() => {
     if (hoursLoaded) return;
@@ -284,6 +342,10 @@ export function BookingForm({
       setSubmitError('Name and email are required.');
       return;
     }
+    if (siteKey && !turnstileToken) {
+      setSubmitError('Please complete the verification.');
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -301,6 +363,7 @@ export function BookingForm({
           notes: notes.trim() || null,
           booking_date: selectedDate,
           booking_time: selectedTime,
+          ...(siteKey && turnstileToken ? { cf_turnstile_response: turnstileToken } : {}),
         }),
       });
       if (!res.ok) {
@@ -567,6 +630,12 @@ export function BookingForm({
             </label>
           </div>
 
+          {siteKey && (
+            <div className="mt-4">
+              <div ref={turnstileRef} />
+            </div>
+          )}
+
           {submitError && (
             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {submitError}
@@ -582,7 +651,7 @@ export function BookingForm({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={submitting || !name.trim() || !email.trim()}
+              disabled={submitting || !name.trim() || !email.trim() || (!!siteKey && !turnstileToken)}
               className="flex-1 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? (

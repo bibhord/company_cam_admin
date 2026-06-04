@@ -26,6 +26,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
+  // Turnstile verification (skip if secret not configured, e.g. local dev)
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    const token = (body as Record<string, string>).cf_turnstile_response;
+    if (!token) {
+      return NextResponse.json({ error: 'Please complete the verification.' }, { status: 400 });
+    }
+    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: turnstileSecret, response: token }),
+    });
+    const verifyData = await verifyRes.json() as { success: boolean };
+    if (!verifyData.success) {
+      return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 400 });
+    }
+  }
+
   // Validate booking_date is in the future
   const bookingDateObj = new Date(booking_date + 'T12:00:00');
   const today = new Date();
