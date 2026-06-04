@@ -22,22 +22,22 @@ const LANGUAGES = [
 ];
 
 const SPECIALTIES = [
-  { value: 'general_contractor', label: 'General Contractor' },
-  { value: 'plumber', label: 'Plumber' },
-  { value: 'electrician', label: 'Electrician' },
-  { value: 'hvac', label: 'HVAC Technician' },
-  { value: 'roofer', label: 'Roofer' },
-  { value: 'painter', label: 'Painter' },
-  { value: 'landscaper', label: 'Landscaper' },
-  { value: 'carpenter', label: 'Carpenter' },
-  { value: 'mason', label: 'Mason' },
-  { value: 'other', label: 'Other' },
+  { value: 'general_contractor', label: 'General Contractor', labelEs: 'Contratista General' },
+  { value: 'plumber', label: 'Plumber', labelEs: 'Plomero' },
+  { value: 'electrician', label: 'Electrician', labelEs: 'Electricista' },
+  { value: 'hvac', label: 'HVAC Technician', labelEs: 'Técnico HVAC' },
+  { value: 'roofer', label: 'Roofer', labelEs: 'Techador' },
+  { value: 'painter', label: 'Painter', labelEs: 'Pintor' },
+  { value: 'landscaper', label: 'Landscaper', labelEs: 'Jardinero' },
+  { value: 'carpenter', label: 'Carpenter', labelEs: 'Carpintero' },
+  { value: 'mason', label: 'Mason', labelEs: 'Albañil' },
+  { value: 'other', label: 'Other', labelEs: 'Otro' },
 ];
 
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [savingPref, setSavingPref] = useState(false);
@@ -211,14 +211,14 @@ export default function SettingsPage() {
               disabled={savingPref}
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
-              <option value="">Select your specialty</option>
+              <option value="">{locale === 'es' ? 'Selecciona tu especialidad' : 'Select your specialty'}</option>
               {SPECIALTIES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>{locale === 'es' ? s.labelEs : s.label}</option>
               ))}
             </select>
             {currentSpecialty && (
               <p className="mt-1.5 text-xs text-slate-500">
-                Current: {currentSpecialty.label}
+                {locale === 'es' ? currentSpecialty.labelEs : currentSpecialty.label}
               </p>
             )}
           </div>

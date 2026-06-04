@@ -295,6 +295,19 @@ export default function MobileSignupPage() {
             <Link href="/m/login" className="mt-4 inline-block text-sm font-semibold text-amber-600 hover:text-amber-700">
               Back to Sign in
             </Link>
+
+            <div className="mt-2 border-t border-slate-100 pt-4">
+              <h2 className="text-lg font-bold text-slate-900">Revisa tu correo</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Enviamos un enlace de verificación a <span className="font-medium text-slate-700">{email}</span>. Haz clic en el enlace para verificar tu dirección de correo.
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Después de la verificación, tu cuenta será revisada y activada por un administrador.
+              </p>
+              <Link href="/m/login" className="mt-4 inline-block text-sm font-semibold text-amber-600 hover:text-amber-700">
+                Volver a Iniciar sesión
+              </Link>
+            </div>
           </div>
         ) : (<>
 
