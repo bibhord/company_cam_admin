@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { SERVICE_TEMPLATES } from '@/lib/service-templates';
 
@@ -293,7 +293,7 @@ export function MobileServicesManager({ initialCategories, initialServices, canM
   );
 }
 
-function BottomSheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function BottomSheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
