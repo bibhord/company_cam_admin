@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface ProjectRow {
@@ -19,11 +20,13 @@ interface Props {
   suggestedSlug: string;
   projects: ProjectRow[];
   completedFeaturedCount: number;
+  activeServiceCount: number;
+  activeServicePreview: string[];
 }
 
 const ROOT = 'captureyourwork.com';
 
-export function PortfolioManager({ orgName, slug, published, suggestedSlug, projects, completedFeaturedCount }: Props) {
+export function PortfolioManager({ orgName, slug, published, suggestedSlug, projects, completedFeaturedCount, activeServiceCount, activeServicePreview }: Props) {
   const router = useRouter();
   const [slugInput, setSlugInput] = useState(slug ?? suggestedSlug);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +180,39 @@ export function PortfolioManager({ orgName, slug, published, suggestedSlug, proj
               );
             })
           )}
+        </div>
+      </div>
+
+      {/* Services card */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-bold text-slate-900">Services</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Active services appear in a menu on your public portfolio.
+            </p>
+            {activeServiceCount === 0 ? (
+              <p className="mt-3 text-sm text-amber-600">No active services — add some to show a services menu on your portfolio.</p>
+            ) : (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-emerald-700">{activeServiceCount} active service{activeServiceCount === 1 ? '' : 's'} will appear</p>
+                <ul className="mt-1 space-y-0.5">
+                  {activeServicePreview.map((name) => (
+                    <li key={name} className="text-xs text-slate-500">· {name}</li>
+                  ))}
+                  {activeServiceCount > activeServicePreview.length && (
+                    <li className="text-xs text-slate-400">…and {activeServiceCount - activeServicePreview.length} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+          <Link
+            href="/admin/services"
+            className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Manage services
+          </Link>
         </div>
       </div>
 

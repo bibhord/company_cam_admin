@@ -63,6 +63,21 @@ export default async function AdminPortfolioPage() {
     photo_count: photoCounts[p.id] ?? 0,
   }));
 
+  const { data: activeSvcs } = await svc
+    .from('services')
+    .select('id, name, is_active')
+    .eq('org_id', profile.org_id)
+    .eq('is_active', true)
+    .order('sort_order')
+    .order('name')
+    .limit(5);
+
+  const { count: totalActive } = await svc
+    .from('services')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', profile.org_id)
+    .eq('is_active', true);
+
   const completedFeatured = rows.filter((p) => p.featured && p.status === 'completed').length;
   const suggestedSlug = user.email
     ? user.email
@@ -89,6 +104,8 @@ export default async function AdminPortfolioPage() {
         suggestedSlug={suggestedSlug}
         projects={rows}
         completedFeaturedCount={completedFeatured}
+        activeServiceCount={totalActive ?? 0}
+        activeServicePreview={(activeSvcs ?? []).map((s) => s.name)}
       />
     </div>
   );
