@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { sendEmail, bookingRequestEmailToOrg } from '@/lib/email';
+import { sendPush } from '@/lib/onesignal';
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Notify org admin
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.captureyourwork.com';
   const { data: adminProfile } = await svc
     .from('profiles')
     .select('user_id')
@@ -95,9 +97,24 @@ export async function POST(req: Request) {
     .limit(1)
     .maybeSingle<{ user_id: string }>();
   if (adminProfile) {
+    // Push notification
+    const { data: devices } = await svc
+      .from('push_devices')
+      .select('push_token')
+      .eq('user_id', adminProfile.user_id);
+    if (devices && devices.length > 0) {
+      const tokens = (devices as { push_token: string }[]).map((d) => d.push_token);
+      await sendPush(
+        tokens,
+        'New booking request',
+        `${customer_name} requested ${service_name} on ${booking_date} at ${booking_time}`,
+        `${appUrl}/admin/bookings`,
+      ).catch(console.error);
+    }
+
+    // Email notification
     const { data: authUser } = await svc.auth.admin.getUserById(adminProfile.user_id);
     if (authUser.user?.email) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.captureyourwork.com';
       await sendEmail(
         bookingRequestEmailToOrg({
           orgName: org.name,

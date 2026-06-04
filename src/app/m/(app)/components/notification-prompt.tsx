@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { oneSignalOptIn } from '@/components/onesignal-init';
 
 export function NotificationPrompt() {
   const [show, setShow] = useState(false);
@@ -17,9 +18,10 @@ export function NotificationPrompt() {
   async function handleAllow() {
     setShow(false);
     try {
-      await Notification.requestPermission();
+      oneSignalOptIn();
     } catch {
-      // Safari may throw
+      // fallback for browsers without OneSignal
+      await Notification.requestPermission().catch(() => null);
     }
   }
 

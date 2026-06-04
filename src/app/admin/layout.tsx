@@ -5,6 +5,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SidebarNav } from './components/sidebar-nav';
 import { AccountMenu } from './components/account-menu';
 import { TrialBanner } from '@/components/trial-banner';
+import { OneSignalInit } from '@/components/onesignal-init';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,6 +151,7 @@ export default async function AdminLayout({
           {children}
         </main>
       </div>
+      <OneSignalInit />
       <script
         dangerouslySetInnerHTML={{
           __html: `

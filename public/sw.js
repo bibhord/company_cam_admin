@@ -1,3 +1,5 @@
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
 // PhotoDoc Service Worker
 // -------------------------------------------------------
 // Network-first strategy with cache fallback for offline support.
