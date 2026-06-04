@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Playfair_Display } from 'next/font/google';
 import { r2SignedUrl } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
+
+const playfair = Playfair_Display({ subsets: ['latin'], display: 'swap' });
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -37,6 +39,7 @@ interface ServiceRow {
 
 function formatPrice(cents: number | null, type: 'fixed' | 'from') {
   if (cents == null) return 'Quote on request';
+  if (cents === 0) return 'Free';
   const dollars = (cents / 100).toFixed(cents % 100 === 0 ? 0 : 2);
   return type === 'from' ? `From $${dollars}` : `$${dollars}`;
 }
@@ -56,7 +59,7 @@ export async function generateMetadata({ params }: RouteParams) {
     .maybeSingle<{ name: string }>();
   return {
     title: org?.name ?? 'Portfolio',
-    description: org ? `See ${org.name}'s recent projects` : '',
+    description: org ? `${org.name} — view our work and services` : '',
   };
 }
 
@@ -87,7 +90,6 @@ export default async function PortfolioPage({ params }: RouteParams) {
 
   const projectList = (projects ?? []) as ProjectRecord[];
 
-  // Services (active only, grouped by category)
   const [{ data: catRows }, { data: svcRows }] = await Promise.all([
     svc.from('service_categories').select('id, name, sort_order').eq('org_id', org.id).order('sort_order').order('name'),
     svc.from('services')
@@ -104,7 +106,6 @@ export default async function PortfolioPage({ params }: RouteParams) {
     servicesByCat.get(k)!.push(s);
   }
 
-  // Grab cover photo per project (most recent)
   const covers: Record<string, string | null> = {};
   for (const p of projectList) {
     const { data: photo } = await svc
@@ -120,70 +121,155 @@ export default async function PortfolioPage({ params }: RouteParams) {
       : null;
   }
 
+  const heroUrl = projectList.length > 0 ? covers[projectList[0].id] : null;
+
+  const visibleCats = categoryList.filter((c) => (servicesByCat.get(c.id)?.length ?? 0) > 0);
+  const uncategorizedServices = servicesByCat.get(null) ?? [];
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
-              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-slate-900">{org.name}</span>
-          </div>
+    <div className="min-h-screen bg-white" style={{ scrollBehavior: 'smooth' } as React.CSSProperties}>
+
+      {/* ── Sticky nav ── */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <span className={`text-lg font-bold text-slate-900 ${playfair.className}`}>{org.name}</span>
+          <nav className="hidden items-center gap-8 sm:flex">
+            {serviceList.length > 0 && (
+              <a href="#services" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+                Services
+              </a>
+            )}
+            {projectList.length > 0 && (
+              <a href="#gallery" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+                Our Work
+              </a>
+            )}
+            <a
+              href="#contact"
+              className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              Get in Touch
+            </a>
+          </nav>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="border-b border-slate-100 bg-slate-50 px-6 py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-screen items-center pt-16">
+        {heroUrl ? (
+          <Image
+            src={heroUrl}
+            alt={org.name}
+            fill
+            unoptimized
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="absolute inset-0 bg-slate-900" />
+        )}
+        {/* gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/20" />
+
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 py-32">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
+            Welcome
+          </p>
+          <h1 className={`max-w-2xl text-5xl font-bold leading-tight text-white sm:text-7xl ${playfair.className}`}>
             {org.name}
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
-            A look at our recent work.
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-white/75">
+            Craftsmanship you can see. Browse our work and services below.
           </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            {serviceList.length > 0 && (
+              <a
+                href="#services"
+                className="rounded-lg bg-amber-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-amber-400"
+              >
+                View Services
+              </a>
+            )}
+            {projectList.length > 0 && (
+              <a
+                href="#gallery"
+                className="rounded-lg border border-white/50 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                See Our Work
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce text-white/50">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
         </div>
       </section>
 
-      {/* Services */}
+      {/* ── Services ── */}
       {serviceList.length > 0 && (
-        <section className="border-b border-slate-100 px-6 py-16">
+        <section id="services" className="bg-stone-50 px-6 py-24">
           <div className="mx-auto max-w-5xl">
-            <h2 className="mb-8 text-2xl font-bold text-slate-900">Services</h2>
-            <div className="space-y-10">
-              {categoryList.filter((c) => (servicesByCat.get(c.id)?.length ?? 0) > 0).map((cat) => (
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500">What we offer</p>
+            <h2 className={`mt-3 text-4xl font-bold text-slate-900 ${playfair.className}`}>
+              Services
+            </h2>
+            <p className="mt-3 text-slate-500">Transparent pricing. No surprises.</p>
+
+            <div className="mt-12 space-y-12">
+              {visibleCats.map((cat) => (
                 <div key={cat.id}>
-                  <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">{cat.name}</h3>
-                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+                  <h3 className="mb-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+                    <span className="inline-block h-px w-8 bg-amber-400" />
+                    {cat.name}
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {(servicesByCat.get(cat.id) ?? []).map((s) => (
-                      <div key={s.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                      <div
+                        key={s.id}
+                        className="flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-6 py-5 shadow-sm"
+                      >
                         <div className="min-w-0">
-                          <p className="text-base font-semibold text-slate-900">{s.name}</p>
-                          {s.description && <p className="mt-0.5 text-sm text-slate-500">{s.description}</p>}
-                          <p className="mt-1 text-xs text-slate-400">{s.duration_min} min</p>
+                          <p className="font-semibold text-slate-900">{s.name}</p>
+                          {s.description && (
+                            <p className="mt-1 text-sm leading-relaxed text-slate-500">{s.description}</p>
+                          )}
+                          <p className="mt-2 text-xs text-slate-400">{s.duration_min} min</p>
                         </div>
-                        <p className="shrink-0 text-base font-bold text-amber-600">{formatPrice(s.price_cents, s.price_type)}</p>
+                        <p className="shrink-0 text-base font-bold text-amber-600">
+                          {formatPrice(s.price_cents, s.price_type)}
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-              {(servicesByCat.get(null)?.length ?? 0) > 0 && (
+
+              {uncategorizedServices.length > 0 && (
                 <div>
-                  <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">More</h3>
-                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-                    {(servicesByCat.get(null) ?? []).map((s) => (
-                      <div key={s.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                  <h3 className="mb-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+                    <span className="inline-block h-px w-8 bg-amber-400" />
+                    More
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {uncategorizedServices.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-6 py-5 shadow-sm"
+                      >
                         <div className="min-w-0">
-                          <p className="text-base font-semibold text-slate-900">{s.name}</p>
-                          {s.description && <p className="mt-0.5 text-sm text-slate-500">{s.description}</p>}
-                          <p className="mt-1 text-xs text-slate-400">{s.duration_min} min</p>
+                          <p className="font-semibold text-slate-900">{s.name}</p>
+                          {s.description && (
+                            <p className="mt-1 text-sm leading-relaxed text-slate-500">{s.description}</p>
+                          )}
+                          <p className="mt-2 text-xs text-slate-400">{s.duration_min} min</p>
                         </div>
-                        <p className="shrink-0 text-base font-bold text-amber-600">{formatPrice(s.price_cents, s.price_type)}</p>
+                        <p className="shrink-0 text-base font-bold text-amber-600">
+                          {formatPrice(s.price_cents, s.price_type)}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -194,58 +280,85 @@ export default async function PortfolioPage({ params }: RouteParams) {
         </section>
       )}
 
-      {/* Projects grid */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="mb-8 text-2xl font-bold text-slate-900">Recent Projects</h2>
+      {/* ── Gallery ── */}
+      {projectList.length > 0 && (
+        <section id="gallery" className="px-6 py-24">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500">Portfolio</p>
+            <h2 className={`mt-3 text-4xl font-bold text-slate-900 ${playfair.className}`}>
+              Our Work
+            </h2>
+            <p className="mt-3 text-slate-500">Recent completed projects.</p>
 
-          {projectList.length === 0 ? (
-            <p className="text-center text-slate-500">No completed projects to show yet.</p>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {projectList.map((p) => (
-                <Link
+                <div
                   key={p.id}
-                  href={`/projects/${p.id}`}
-                  className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-amber-300 hover:shadow-lg"
+                  className="group relative overflow-hidden rounded-2xl bg-slate-100"
+                  style={{ aspectRatio: '4/3' }}
                 >
-                  <div className="relative aspect-[4/3] bg-slate-100">
-                    {covers[p.id] ? (
-                      <Image
-                        src={covers[p.id]!}
-                        alt={p.name}
-                        fill
-                        unoptimized
-                        className="object-cover transition group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                        No photo
-                      </div>
-                    )}
+                  {covers[p.id] ? (
+                    <Image
+                      src={covers[p.id]!}
+                      alt={p.name}
+                      fill
+                      unoptimized
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                      No photo
+                    </div>
+                  )}
+                  {/* hover overlay */}
+                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-transparent to-transparent p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <div>
+                      <p className="text-base font-semibold text-white">{p.name}</p>
+                      <p className="mt-1 text-xs text-white/70">
+                        {new Date(p.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-5">
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-600">
-                      {p.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Completed {new Date(p.created_at).toLocaleDateString()}
-                    </p>
+                  {/* always-visible subtle label on mobile */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 sm:hidden">
+                    <p className="text-sm font-semibold text-white">{p.name}</p>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── CTA ── */}
+      <section id="contact" className="bg-slate-900 px-6 py-24 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">Get started</p>
+        <h2 className={`mt-4 text-4xl font-bold text-white sm:text-5xl ${playfair.className}`}>
+          Ready to work together?
+        </h2>
+        <p className="mx-auto mt-4 max-w-md text-slate-400">
+          We&apos;d love to hear about your project. Reach out and let&apos;s make something great.
+        </p>
+        <a
+          href={`mailto:?subject=Inquiry — ${org.name}`}
+          className="mt-10 inline-block rounded-lg bg-amber-500 px-10 py-4 text-sm font-bold text-white shadow-lg transition hover:bg-amber-400"
+        >
+          Get in Touch
+        </a>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 px-6 py-8 text-center">
-        <p className="text-xs text-slate-400">
+      {/* ── Footer ── */}
+      <footer className="border-t border-slate-800 bg-slate-900 px-6 py-8 text-center">
+        <p className="text-xs text-slate-500">
           &copy; {new Date().getFullYear()} {org.name}
           {' · '}
-          <a href="https://captureyourwork.com" target="_blank" rel="noopener" className="text-amber-600 hover:underline">
+          <a
+            href="https://captureyourwork.com"
+            target="_blank"
+            rel="noopener"
+            className="text-amber-600 transition hover:text-amber-400"
+          >
             Powered by CaptureYourWork
           </a>
         </p>
