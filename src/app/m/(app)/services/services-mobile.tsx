@@ -135,6 +135,17 @@ export function MobileServicesManager({ initialCategories, initialServices, canM
     setBusy(false);
   }
 
+  async function deleteAllUncategorized() {
+    const list = servicesByCat.get(null) ?? [];
+    if (!confirm(`Delete all ${list.length} uncategorized service${list.length === 1 ? '' : 's'}?`)) return;
+    setBusy(true);
+    for (const s of list) {
+      await fetch(`/api/admin/services/${s.id}`, { method: 'DELETE' });
+    }
+    setServices((sv) => sv.filter((x) => x.category_id !== null));
+    setBusy(false);
+  }
+
   const isEmpty = categories.length === 0 && services.length === 0;
 
   return (
@@ -217,8 +228,14 @@ export function MobileServicesManager({ initialCategories, initialServices, canM
       {/* Uncategorized */}
       {(servicesByCat.get(null)?.length ?? 0) > 0 && (
         <section className="rounded-2xl bg-white shadow-sm">
-          <div className="px-4 py-3 border-b border-slate-100">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <h2 className="text-sm font-bold text-slate-900">Uncategorized</h2>
+            {canManage && (
+              <div className="flex items-center gap-3">
+                <button onClick={() => setAddingServiceTo(null)} className="text-xs font-semibold text-amber-600 active:text-amber-700">+ Service</button>
+                <button onClick={deleteAllUncategorized} className="text-xs text-slate-400 active:text-red-600">Delete</button>
+              </div>
+            )}
           </div>
           <ul className="divide-y divide-slate-100">
             {(servicesByCat.get(null) ?? []).map((s) => (

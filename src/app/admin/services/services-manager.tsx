@@ -41,7 +41,7 @@ export function ServicesManager({ initialCategories, initialServices, canManage 
   const [templateOpen, setTemplateOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
-  const [addingServiceTo, setAddingServiceTo] = useState<string | null>(null);
+  const [addingServiceTo, setAddingServiceTo] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -128,7 +128,7 @@ export function ServicesManager({ initialCategories, initialServices, canManage 
       if (isNew) setServices((s) => [...s, body]);
       else setServices((s) => s.map((x) => x.id === body.id ? body : x));
       setEditingService(null);
-      setAddingServiceTo(null);
+      setAddingServiceTo(undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed.');
     } finally { setBusy(false); }
@@ -139,6 +139,17 @@ export function ServicesManager({ initialCategories, initialServices, canManage 
     setBusy(true);
     const res = await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
     if (res.ok) setServices((s) => s.filter((x) => x.id !== id));
+    setBusy(false);
+  }
+
+  async function deleteAllUncategorized() {
+    const list = servicesByCat.get(null) ?? [];
+    if (!confirm(`Delete all ${list.length} uncategorized service${list.length === 1 ? '' : 's'}?`)) return;
+    setBusy(true);
+    for (const s of list) {
+      await fetch(`/api/admin/services/${s.id}`, { method: 'DELETE' });
+    }
+    setServices((sv) => sv.filter((x) => x.category_id !== null));
     setBusy(false);
   }
 
@@ -212,17 +223,17 @@ export function ServicesManager({ initialCategories, initialServices, canManage 
           category={{ id: 'uncategorized', name: 'Uncategorized', sort_order: 9999 }}
           services={uncategorized}
           canManage={canManage}
-          onDelete={() => {}}
-          deletable={false}
-          onAddService={() => {}}
+          onDelete={deleteAllUncategorized}
+          deletable={true}
+          onAddService={() => setAddingServiceTo(null)}
           editingId={editingService?.id ?? null}
           onEdit={(s) => setEditingService(s)}
           onCancelEdit={() => setEditingService(null)}
           onSave={(s) => saveService(s, false)}
           onDeleteService={deleteService}
-          isAdding={false}
-          onAddSave={() => {}}
-          onAddCancel={() => {}}
+          isAdding={addingServiceTo === null}
+          onAddSave={(s) => saveService(s, true)}
+          onAddCancel={() => setAddingServiceTo(undefined)}
           busy={busy}
         />
       )}
@@ -305,7 +316,8 @@ function CategorySection({
         {isAdding && (
           <ServiceForm
             initial={{
-              id: '', name: '', description: '', category_id: category.id,
+              id: '', name: '', description: '',
+              category_id: category.id === 'uncategorized' ? null : category.id,
               duration_min: 30, price_cents: null, price_type: 'fixed',
               is_active: true, sort_order: services.length,
             }}
