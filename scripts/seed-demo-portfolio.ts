@@ -334,11 +334,17 @@ async function seedVertical(key: string, dryRun: boolean) {
     onboarding_complete: true,
   });
 
-  // 4. Projects + photos
+  // 4. Wipe any stale projects/photos from a previous run for this org
+  //    so re-runs don't double-up. ON DELETE CASCADE on photos handles the
+  //    children; photo_annotations have ON DELETE CASCADE from photo_id.
+  await supabase.from('projects').delete().eq('org_id', orgId);
+
+  // 5. Projects + photos
   for (const projCfg of cfg.projects) {
     const { data: project, error: projErr } = await supabase
       .from('projects')
       .insert({
+        id: randomUUID(),
         org_id: orgId,
         name: projCfg.name,
         status: 'completed',
@@ -371,12 +377,13 @@ async function seedVertical(key: string, dryRun: boolean) {
         const { data: photo, error: photoErr } = await supabase
           .from('photos')
           .insert({
+            id: randomUUID(),
             org_id: orgId,
             project_id: project.id,
             created_by: userId,
             name: `${projCfg.name} · ${qi + 1}`,
             object_key: objectKey,
-            status: 'published',
+            status: 'active',
             upload_status: 'uploaded',
             lat: projCfg.lat,
             lon: projCfg.lng,
