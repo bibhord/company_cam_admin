@@ -441,7 +441,7 @@ function TemplatePicker({ onPick, onClose, busy }: { onPick: (key: string) => vo
           </button>
         </div>
         <p className="mb-4 text-xs text-slate-500">
-          Adds the template's categories and services to your existing catalog. You can edit or delete anything afterward.
+          Adds the template&apos;s categories and services to your existing catalog. You can edit or delete anything afterward.
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           {SERVICE_TEMPLATES.map((t) => (
