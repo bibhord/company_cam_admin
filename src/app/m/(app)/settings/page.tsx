@@ -254,7 +254,7 @@ export default function SettingsPage() {
             <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 18c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 0a8.997 8.997 0 0 0-7.843 4.582M12 3a8.997 8.997 0 0 1 7.843 4.582m0 0A11.96 11.96 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A11.96 11.96 0 0 1 22 14.999m0 0a11.96 11.96 0 0 1-2.157 7.418M2 14.999a11.96 11.96 0 0 1 2.157-7.418" />
             </svg>
-            <span className="flex-1 text-sm text-slate-900">Public website</span>
+            <span className="flex-1 text-sm text-slate-900">{t('settings.publicWebsite')}</span>
             <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
             </svg>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
             <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
             </svg>
-            <span className="flex-1 text-sm text-slate-900">Help &amp; Support</span>
+            <span className="flex-1 text-sm text-slate-900">{t('settings.helpSupport')}</span>
             <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
             </svg>
@@ -288,26 +288,26 @@ export default function SettingsPage() {
             onClick={() => setShowDeleteConfirm(true)}
             className="w-full py-3 text-xs text-slate-400 underline"
           >
-            Delete Account
+            {t('settings.deleteAccount')}
           </button>
         ) : (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
-            <p className="text-sm font-semibold text-red-700">Delete your account?</p>
-            <p className="text-xs text-red-600">This will permanently delete your account and all associated data. This cannot be undone.</p>
+            <p className="text-sm font-semibold text-red-700">{t('settings.deleteAccountConfirm')}</p>
+            <p className="text-xs text-red-600">{t('settings.deleteAccountWarning')}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
                 className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm text-slate-600 disabled:opacity-60"
               >
-                Cancel
+                {t('settings.cancel')}
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleting}
                 className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {deleting ? 'Deleting...' : 'Delete Account'}
+                {deleting ? t('settings.deleting') : t('settings.deleteAccount')}
               </button>
             </div>
           </div>
