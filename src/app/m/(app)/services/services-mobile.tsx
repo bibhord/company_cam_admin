@@ -62,8 +62,13 @@ export function MobileServicesManager({ initialCategories, initialServices, canM
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? 'Could not load template.');
       }
+      const fresh = await fetch('/api/admin/services');
+      if (fresh.ok) {
+        const { categories: cats, services: svcs } = await fresh.json();
+        setCategories(cats ?? []);
+        setServices(svcs ?? []);
+      }
       setTemplateOpen(false);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed.');
     } finally { setBusy(false); }
