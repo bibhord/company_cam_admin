@@ -448,6 +448,7 @@ function ServiceForm({
 }
 
 function TemplatePicker({ onPick, onClose, busy }: { onPick: (key: string) => void; onClose: () => void; busy: boolean }) {
+  const [selected, setSelected] = useState<string | null>(null);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-2xl bg-white p-5" onClick={(e) => e.stopPropagation()}>
@@ -464,9 +465,13 @@ function TemplatePicker({ onPick, onClose, busy }: { onPick: (key: string) => vo
           {SERVICE_TEMPLATES.map((t) => (
             <button
               key={t.key}
-              onClick={() => onPick(t.key)}
+              onClick={() => setSelected(t.key)}
               disabled={busy}
-              className="rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-amber-300 hover:shadow-sm disabled:opacity-50"
+              className={`rounded-xl border p-4 text-left transition disabled:opacity-50 ${
+                selected === t.key
+                  ? 'border-amber-400 bg-amber-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-amber-300 hover:shadow-sm'
+              }`}
             >
               <p className="text-sm font-bold text-slate-900">{t.label}</p>
               <p className="mt-0.5 text-xs text-slate-500">{t.blurb}</p>
@@ -475,6 +480,18 @@ function TemplatePicker({ onPick, onClose, busy }: { onPick: (key: string) => vo
               </p>
             </button>
           ))}
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} disabled={busy} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button
+            onClick={() => selected && onPick(selected)}
+            disabled={busy || !selected}
+            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+          >
+            {busy ? 'Saving…' : 'Use template'}
+          </button>
         </div>
       </div>
     </div>

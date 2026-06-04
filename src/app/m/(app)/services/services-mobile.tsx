@@ -289,27 +289,11 @@ export function MobileServicesManager({ initialCategories, initialServices, canM
 
       {/* Template picker */}
       {templateOpen && (
-        <BottomSheet title="Pick a template" onClose={() => setTemplateOpen(false)}>
-          <div className="space-y-2 p-4">
-            <p className="mb-2 text-xs text-slate-500">
-              Adds the template&apos;s categories and services to your catalog. Edit or delete anything afterward.
-            </p>
-            {SERVICE_TEMPLATES.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => cloneTemplate(t.key)}
-                disabled={busy}
-                className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left active:bg-slate-50 disabled:opacity-50"
-              >
-                <p className="text-sm font-bold text-slate-900">{t.label}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{t.blurb}</p>
-                <p className="mt-1.5 text-[11px] text-slate-400">
-                  {t.categories.length} categor{t.categories.length === 1 ? 'y' : 'ies'} · {t.categories.reduce((s, c) => s + c.services.length, 0)} services
-                </p>
-              </button>
-            ))}
-          </div>
-        </BottomSheet>
+        <TemplatePickerSheet
+          busy={busy}
+          onPick={cloneTemplate}
+          onClose={() => setTemplateOpen(false)}
+        />
       )}
     </div>
   );
@@ -471,5 +455,50 @@ function ServiceForm({
         </button>
       </div>
     </div>
+  );
+}
+
+function TemplatePickerSheet({ onPick, onClose, busy }: { onPick: (key: string) => void; onClose: () => void; busy: boolean }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  return (
+    <BottomSheet title="Pick a template" onClose={onClose}>
+      <div className="p-4">
+        <p className="mb-3 text-xs text-slate-500">
+          Adds the template&apos;s categories and services to your catalog. Edit or delete anything afterward.
+        </p>
+        <div className="space-y-2">
+          {SERVICE_TEMPLATES.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setSelected(t.key)}
+              disabled={busy}
+              className={`w-full rounded-xl border p-4 text-left disabled:opacity-50 ${
+                selected === t.key
+                  ? 'border-amber-400 bg-amber-50'
+                  : 'border-slate-200 bg-white active:bg-slate-50'
+              }`}
+            >
+              <p className="text-sm font-bold text-slate-900">{t.label}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{t.blurb}</p>
+              <p className="mt-1.5 text-[11px] text-slate-400">
+                {t.categories.length} categor{t.categories.length === 1 ? 'y' : 'ies'} · {t.categories.reduce((s, c) => s + c.services.length, 0)} services
+              </p>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button onClick={onClose} disabled={busy} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 active:bg-slate-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button
+            onClick={() => selected && onPick(selected)}
+            disabled={busy || !selected}
+            className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white active:bg-amber-600 disabled:opacity-50"
+          >
+            {busy ? 'Saving…' : 'Use template'}
+          </button>
+        </div>
+      </div>
+    </BottomSheet>
   );
 }
