@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { oneSignalOptIn } from '@/components/onesignal-init';
 
 export function NotificationPrompt() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return; // OneSignalCapacitorInit handles native
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'default') return;
 

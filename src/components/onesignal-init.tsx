@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 interface OneSignalPushSubscription {
   id: string | null;
@@ -38,6 +39,7 @@ async function saveSubscription(id: string) {
 
 export function OneSignalInit() {
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return; // handled by OneSignalCapacitorInit
     const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
     if (!appId) return;
     if (document.getElementById('onesignal-sdk')) return;

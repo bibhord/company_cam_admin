@@ -8,6 +8,7 @@ import { VersionCheck } from './components/version-check';
 import { NotificationPrompt } from './components/notification-prompt';
 import { LocaleWrapper } from './components/locale-wrapper';
 import { OneSignalInit } from '@/components/onesignal-init';
+import { OneSignalCapacitorInit } from './components/onesignal-capacitor-init';
 import { PendingSignOutButton } from './pending-sign-out-button';
 import { TrialBanner } from '@/components/trial-banner';
 
@@ -96,6 +97,7 @@ export default async function MobileLayout({
       {profile?.org_id && <TrialBanner orgId={profile.org_id} upgradeHref="/m/upgrade" />}
       <VersionCheck />
       <OneSignalInit />
+      <OneSignalCapacitorInit />
       <NotificationPrompt />
       <ServiceWorkerRegister />
       <main className="flex-1 pb-16">
