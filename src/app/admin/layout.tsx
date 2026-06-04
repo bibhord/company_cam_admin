@@ -33,6 +33,7 @@ const navSections = [
     label: 'Marketing',
     items: [
       { label: 'Portfolio', href: '/admin/portfolio', icon: 'portfolio' },
+      { label: 'Services', href: '/admin/services', icon: 'services' },
     ],
   },
 ];

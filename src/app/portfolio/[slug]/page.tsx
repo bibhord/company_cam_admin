@@ -23,6 +23,24 @@ interface ProjectRecord {
   created_at: string;
 }
 
+interface CategoryRow { id: string; name: string; sort_order: number }
+interface ServiceRow {
+  id: string;
+  category_id: string | null;
+  name: string;
+  description: string | null;
+  duration_min: number;
+  price_cents: number | null;
+  price_type: 'fixed' | 'from';
+  sort_order: number;
+}
+
+function formatPrice(cents: number | null, type: 'fixed' | 'from') {
+  if (cents == null) return 'Quote on request';
+  const dollars = (cents / 100).toFixed(cents % 100 === 0 ? 0 : 2);
+  return type === 'from' ? `From $${dollars}` : `$${dollars}`;
+}
+
 export async function generateMetadata({ params }: RouteParams) {
   const { slug } = await params;
   const svc = createClient(
@@ -69,6 +87,23 @@ export default async function PortfolioPage({ params }: RouteParams) {
 
   const projectList = (projects ?? []) as ProjectRecord[];
 
+  // Services (active only, grouped by category)
+  const [{ data: catRows }, { data: svcRows }] = await Promise.all([
+    svc.from('service_categories').select('id, name, sort_order').eq('org_id', org.id).order('sort_order').order('name'),
+    svc.from('services')
+      .select('id, category_id, name, description, duration_min, price_cents, price_type, sort_order')
+      .eq('org_id', org.id).eq('is_active', true)
+      .order('sort_order').order('name'),
+  ]);
+  const categoryList = (catRows ?? []) as CategoryRow[];
+  const serviceList = (svcRows ?? []) as ServiceRow[];
+  const servicesByCat = new Map<string | null, ServiceRow[]>();
+  for (const s of serviceList) {
+    const k = s.category_id;
+    if (!servicesByCat.has(k)) servicesByCat.set(k, []);
+    servicesByCat.get(k)!.push(s);
+  }
+
   // Grab cover photo per project (most recent)
   const covers: Record<string, string | null> = {};
   for (const p of projectList) {
@@ -113,6 +148,51 @@ export default async function PortfolioPage({ params }: RouteParams) {
           </p>
         </div>
       </section>
+
+      {/* Services */}
+      {serviceList.length > 0 && (
+        <section className="border-b border-slate-100 px-6 py-16">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-8 text-2xl font-bold text-slate-900">Services</h2>
+            <div className="space-y-10">
+              {categoryList.filter((c) => (servicesByCat.get(c.id)?.length ?? 0) > 0).map((cat) => (
+                <div key={cat.id}>
+                  <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">{cat.name}</h3>
+                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+                    {(servicesByCat.get(cat.id) ?? []).map((s) => (
+                      <div key={s.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                        <div className="min-w-0">
+                          <p className="text-base font-semibold text-slate-900">{s.name}</p>
+                          {s.description && <p className="mt-0.5 text-sm text-slate-500">{s.description}</p>}
+                          <p className="mt-1 text-xs text-slate-400">{s.duration_min} min</p>
+                        </div>
+                        <p className="shrink-0 text-base font-bold text-amber-600">{formatPrice(s.price_cents, s.price_type)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(servicesByCat.get(null)?.length ?? 0) > 0 && (
+                <div>
+                  <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">More</h3>
+                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+                    {(servicesByCat.get(null) ?? []).map((s) => (
+                      <div key={s.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                        <div className="min-w-0">
+                          <p className="text-base font-semibold text-slate-900">{s.name}</p>
+                          {s.description && <p className="mt-0.5 text-sm text-slate-500">{s.description}</p>}
+                          <p className="mt-1 text-xs text-slate-400">{s.duration_min} min</p>
+                        </div>
+                        <p className="shrink-0 text-base font-bold text-amber-600">{formatPrice(s.price_cents, s.price_type)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Projects grid */}
       <section className="px-6 py-16">
