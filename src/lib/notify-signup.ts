@@ -24,7 +24,7 @@ https://app.captureyourwork.com/superadmin/orgs`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'CaptureYourWork <noreply@captureyourwork.com>',
+          from: 'CaptureYourWork <noreply@mail.captureyourwork.com>',
           to,
           subject,
           text: body,
