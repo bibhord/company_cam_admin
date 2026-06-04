@@ -187,7 +187,7 @@ export default async function PortfolioPage({ params }: RouteParams) {
                 href="#services"
                 className="rounded-lg bg-amber-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-amber-400"
               >
-                View Services
+                Book a service
               </a>
             )}
             {projectList.length > 0 && (
@@ -232,12 +232,18 @@ export default async function PortfolioPage({ params }: RouteParams) {
                         key={s.id}
                         className="flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-6 py-5 shadow-sm"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-semibold text-slate-900">{s.name}</p>
                           {s.description && (
                             <p className="mt-1 text-sm leading-relaxed text-slate-500">{s.description}</p>
                           )}
                           <p className="mt-2 text-xs text-slate-400">{s.duration_min} min</p>
+                          <a
+                            href={`/book/${slug}?service=${s.id}`}
+                            className="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-400"
+                          >
+                            Book
+                          </a>
                         </div>
                         <p className="shrink-0 text-base font-bold text-amber-600">
                           {formatPrice(s.price_cents, s.price_type)}
@@ -260,12 +266,18 @@ export default async function PortfolioPage({ params }: RouteParams) {
                         key={s.id}
                         className="flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-6 py-5 shadow-sm"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-semibold text-slate-900">{s.name}</p>
                           {s.description && (
                             <p className="mt-1 text-sm leading-relaxed text-slate-500">{s.description}</p>
                           )}
                           <p className="mt-2 text-xs text-slate-400">{s.duration_min} min</p>
+                          <a
+                            href={`/book/${slug}?service=${s.id}`}
+                            className="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-400"
+                          >
+                            Book
+                          </a>
                         </div>
                         <p className="shrink-0 text-base font-bold text-amber-600">
                           {formatPrice(s.price_cents, s.price_type)}

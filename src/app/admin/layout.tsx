@@ -27,6 +27,7 @@ const navSections = [
     items: [
       { label: 'Projects', href: '/admin/projects', icon: 'projects' },
       { label: 'Photos', href: '/admin/photos', icon: 'photos' },
+      { label: 'Bookings', href: '/admin/bookings', icon: 'bookings' },
     ],
   },
   {
