@@ -219,6 +219,16 @@ async function fetchUnsplash(query: string): Promise<{ id: string; url: string }
   return { id: body.id, url: body.urls.regular };
 }
 
+async function unsplashRemaining(): Promise<number | null> {
+  const res = await fetch('https://api.unsplash.com/photos/random?query=test', {
+    method: 'HEAD',
+    headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+  });
+  const remainingHeader = res.headers.get('x-ratelimit-remaining');
+  if (remainingHeader == null) return null;
+  return parseInt(remainingHeader, 10);
+}
+
 async function downloadImage(url: string): Promise<Buffer> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Download ${res.status}`);
@@ -334,12 +344,22 @@ async function seedVertical(key: string, dryRun: boolean) {
     onboarding_complete: true,
   });
 
-  // 4. Wipe any stale projects/photos from a previous run for this org
+  // 4. Probe the Unsplash rate-limit budget BEFORE wiping anything. If
+  //    we can't seed enough photos for this vertical, skip it so we don't
+  //    destroy a previously-good seed in the process.
+  const neededPhotos = cfg.projects.reduce((s, p) => s + p.photo_queries.length, 0);
+  const remaining = await unsplashRemaining();
+  if (remaining != null && remaining < neededPhotos) {
+    console.warn(`  Unsplash budget ${remaining} < needed ${neededPhotos}; skipping ${cfg.slug} to preserve existing content`);
+    return;
+  }
+
+  // 5. Wipe any stale projects/photos from a previous run for this org
   //    so re-runs don't double-up. ON DELETE CASCADE on photos handles the
   //    children; photo_annotations have ON DELETE CASCADE from photo_id.
   await supabase.from('projects').delete().eq('org_id', orgId);
 
-  // 5. Projects + photos
+  // 6. Projects + photos
   for (const projCfg of cfg.projects) {
     const { data: project, error: projErr } = await supabase
       .from('projects')
@@ -440,7 +460,7 @@ async function seedVertical(key: string, dryRun: boolean) {
     }
   }
 
-  // 5. Register the subdomain with Vercel so it actually resolves.
+  // 7. Register the subdomain with Vercel so it actually resolves.
   await registerVercelDomain(`${cfg.slug}.captureyourwork.com`);
 
   console.log(`✓ ${cfg.slug}.captureyourwork.com is live\n`);
