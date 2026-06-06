@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { MobileHeader } from './components/mobile-header';
 import { MobileAnnotationModal } from './components/mobile-annotation-modal';
 import { BeforeAfterSlider } from './components/before-after-slider';
@@ -590,7 +591,7 @@ export default function PhotosPage() {
             </button>
 
             {/* Create a project */}
-            <a
+            <Link
               href="/m/projects/new"
               className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 shadow-sm border-2 border-slate-200 active:bg-slate-50 transition-colors"
             >
@@ -606,7 +607,7 @@ export default function PhotosPage() {
               <svg className="ml-auto h-5 w-5 shrink-0 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
               </svg>
-            </a>
+            </Link>
           </div>
         ) : view === 'list' ? (
           <div className="space-y-2">
