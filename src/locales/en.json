@@ -62,6 +62,14 @@
     "continue": "Continue",
     "skip": "Skip"
   },
+  "gettingStarted": {
+    "welcome": "Welcome! Let's get started",
+    "subtitle": "Two quick steps to get going",
+    "takePhoto": "Take a Photo",
+    "takePhotoDesc": "Capture your first job site photo",
+    "createProject": "Create a Project",
+    "createProjectDesc": "Organize your photos by job site"
+  },
   "photos": {
     "captureYourWork": "Capture Your Work",
     "noPhotosYet": "No Photos Yet",
@@ -88,6 +96,13 @@
     "noProjectsFound": "No Projects Found",
     "tryDifferentSearch": "Try a different search term",
     "noProjectsCreated": "No projects have been created yet",
+    "new": {
+      "title": "New Project",
+      "nameLabel": "Project name",
+      "namePlaceholder": "e.g. Smith kitchen remodel",
+      "create": "Create Project",
+      "creating": "Creating..."
+    },
     "mapViewComingSoon": "Map view coming soon",
     "mapViewDescription": "View your projects on a map",
     "sortAZ": "A-Z",

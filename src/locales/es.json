@@ -62,6 +62,14 @@
     "continue": "Continuar",
     "skip": "Omitir"
   },
+  "gettingStarted": {
+    "welcome": "¡Bienvenido! Empecemos",
+    "subtitle": "Dos pasos rápidos para comenzar",
+    "takePhoto": "Tomar una foto",
+    "takePhotoDesc": "Captura tu primera foto de obra",
+    "createProject": "Crear un proyecto",
+    "createProjectDesc": "Organiza tus fotos por trabajo"
+  },
   "photos": {
     "captureYourWork": "Captura tu trabajo",
     "noPhotosYet": "Aún no hay fotos",
@@ -88,6 +96,13 @@
     "noProjectsFound": "No se encontraron proyectos",
     "tryDifferentSearch": "Intenta con otro término de búsqueda",
     "noProjectsCreated": "Aún no se ha creado ningún proyecto",
+    "new": {
+      "title": "Nuevo proyecto",
+      "nameLabel": "Nombre del proyecto",
+      "namePlaceholder": "Ej. Remodelación cocina García",
+      "create": "Crear proyecto",
+      "creating": "Creando..."
+    },
     "mapViewComingSoon": "Vista de mapa próximamente",
     "mapViewDescription": "Visualiza tus proyectos en un mapa",
     "sortAZ": "A-Z",
