@@ -174,5 +174,55 @@
   },
   "services": {
     "title": "Services"
+  },
+  "admin": {
+    "nav": {
+      "workspace": "Workspace",
+      "marketing": "Marketing",
+      "projects": "Projects",
+      "photos": "Photos",
+      "bookings": "Bookings",
+      "portfolio": "Portfolio",
+      "services": "Services"
+    },
+    "account": {
+      "myPhotos": "My Photos",
+      "mySettings": "My Settings",
+      "notifications": "Notifications",
+      "company": "Company",
+      "companyDashboard": "Company Dashboard",
+      "companySettings": "Company Settings",
+      "billing": "Billing",
+      "tags": "Tags",
+      "support": "Support",
+      "helpCenter": "Help Center",
+      "chatWithSupport": "Chat with Support"
+    },
+    "projects": {
+      "title": "Projects",
+      "newProject": "New Project",
+      "manageUsers": "Manage Users",
+      "createProject": "Create Project",
+      "allProjects": "All Projects",
+      "latestUploads": "Latest Uploads",
+      "totalProjects": "Total Projects",
+      "totalPhotos": "Total Photos",
+      "unassignedPhotos": "Unassigned Photos",
+      "photosNotLinked": "Photos not linked to any project",
+      "noProjectsYet": "No projects yet",
+      "createFirstProject": "Create your first project to start documenting job sites.",
+      "noProjectsAssigned": "No projects have been assigned to you yet.",
+      "noPhotosYet": "No photos yet",
+      "photosWillAppear": "Once your team uploads photos they will appear here.",
+      "created": "Created",
+      "photo": "photo",
+      "photoPlural": "photos",
+      "project": "project",
+      "projectPlural": "projects"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "description": "Manage incoming appointment requests."
+    }
   }
 }

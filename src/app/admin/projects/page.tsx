@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { PhotoCard } from '../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../types';
 import { r2SignedUrl } from '@/lib/r2';
+import { createAdminT } from '@/lib/admin-i18n';
+import type { AdminLocale } from '@/lib/admin-i18n';
 
 interface ProfileRecord {
   org_id: string;
   role: string;
+  language: string | null;
 }
 
 const formatProjectDate = (value: string | null) => {
@@ -32,7 +35,7 @@ export default async function ProjectsPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('org_id, role')
+    .select('org_id, role, language')
     .eq('user_id', user.id)
     .single<ProfileRecord>();
 
@@ -50,6 +53,8 @@ export default async function ProjectsPage() {
     );
   }
 
+  const locale = (profile.language === 'es' ? 'es' : 'en') as AdminLocale;
+  const t = createAdminT(locale);
   const canManageOrg = profile.role === 'admin' || profile.role === 'manager';
 
   let projectsQuery = supabase
@@ -142,9 +147,9 @@ export default async function ProjectsPage() {
       {/* Header */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t('admin.projects.title')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {projectRecords.length} project{projectRecords.length !== 1 ? 's' : ''} &middot; {photoRecords.length} photo{photoRecords.length !== 1 ? 's' : ''}
+            {projectRecords.length} {projectRecords.length !== 1 ? t('admin.projects.projectPlural') : t('admin.projects.project')} &middot; {photoRecords.length} {photoRecords.length !== 1 ? t('admin.projects.photoPlural') : t('admin.projects.photo')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -155,14 +160,14 @@ export default async function ProjectsPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            New Project
+            {t('admin.projects.newProject')}
           </Link>
           {canManageOrg ? (
             <Link
               href="/admin/users"
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              Manage Users
+              {t('admin.projects.manageUsers')}
             </Link>
           ) : null}
         </div>
@@ -171,39 +176,39 @@ export default async function ProjectsPage() {
       {/* Stats cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Total Projects</p>
+          <p className="text-sm font-medium text-slate-500">{t('admin.projects.totalProjects')}</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{projectRecords.length}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Total Photos</p>
+          <p className="text-sm font-medium text-slate-500">{t('admin.projects.totalPhotos')}</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{photoRecords.length}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm font-medium text-slate-500">Unassigned Photos</p>
+          <p className="text-sm font-medium text-slate-500">{t('admin.projects.unassignedPhotos')}</p>
           <p className={`mt-1 text-2xl font-bold ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
             {unassignedCount}
           </p>
           {unassignedCount > 0 && (
-            <p className="mt-1 text-xs text-slate-400">Photos not linked to any project</p>
+            <p className="mt-1 text-xs text-slate-400">{t('admin.projects.photosNotLinked')}</p>
           )}
         </div>
       </div>
 
       {/* Projects list */}
       <section className="mb-10">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">All Projects</h2>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">{t('admin.projects.allProjects')}</h2>
         {projectRecords.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
             </svg>
-            <p className="mt-3 text-sm font-medium text-slate-600">No projects yet</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">{t('admin.projects.noProjectsYet')}</p>
             <p className="mt-1 text-xs text-slate-400">
-              {canManageOrg ? 'Create your first project to start documenting job sites.' : 'No projects have been assigned to you yet.'}
+              {canManageOrg ? t('admin.projects.createFirstProject') : t('admin.projects.noProjectsAssigned')}
             </p>
             {canManageOrg && (
               <Link href="/admin/projects/new" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600">
-                Create Project
+                {t('admin.projects.createProject')}
               </Link>
             )}
           </div>
@@ -223,7 +228,7 @@ export default async function ProjectsPage() {
                         {project.name ?? 'Untitled Project'}
                       </h3>
                       <p className="mt-1 text-xs text-slate-400">
-                        Created {formatProjectDate(project.created_at)}
+                        {t('admin.projects.created')} {formatProjectDate(project.created_at)}
                       </p>
                     </div>
                     <svg className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-amber-500 transition-colors mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -234,7 +239,7 @@ export default async function ProjectsPage() {
                     <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
                     </svg>
-                    <span className="text-xs text-slate-500">{count} photo{count !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-slate-500">{count} {count !== 1 ? t('admin.projects.photoPlural') : t('admin.projects.photo')}</span>
                   </div>
                 </Link>
               );
@@ -245,14 +250,14 @@ export default async function ProjectsPage() {
 
       {/* Latest uploads */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-slate-900">Latest Uploads</h2>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">{t('admin.projects.latestUploads')}</h2>
         {latestPhotoRecords.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
             </svg>
-            <p className="mt-3 text-sm font-medium text-slate-600">No photos yet</p>
-            <p className="mt-1 text-xs text-slate-400">Once your team uploads photos they will appear here.</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">{t('admin.projects.noPhotosYet')}</p>
+            <p className="mt-1 text-xs text-slate-400">{t('admin.projects.photosWillAppear')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">

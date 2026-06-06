@@ -6,6 +6,7 @@ import { SidebarNav } from './components/sidebar-nav';
 import { AccountMenu } from './components/account-menu';
 import { TrialBanner } from '@/components/trial-banner';
 import { OneSignalInit } from '@/components/onesignal-init';
+import { LocaleWrapper } from '@/app/m/(app)/components/locale-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ interface ProfileRecord {
   first_name: string | null;
   last_name: string | null;
   role: string;
+  language: string | null;
   onboarding_complete: boolean | null;
   is_super_admin?: boolean;
   organizations?: {
@@ -22,23 +24,6 @@ interface ProfileRecord {
   } | null;
 }
 
-const navSections = [
-  {
-    label: 'Workspace',
-    items: [
-      { label: 'Projects', href: '/admin/projects', icon: 'projects' },
-      { label: 'Photos', href: '/admin/photos', icon: 'photos' },
-      { label: 'Bookings', href: '/admin/bookings', icon: 'bookings' },
-    ],
-  },
-  {
-    label: 'Marketing',
-    items: [
-      { label: 'Portfolio', href: '/admin/portfolio', icon: 'portfolio' },
-      { label: 'Services', href: '/admin/services', icon: 'services' },
-    ],
-  },
-];
 
 export default async function AdminLayout({
   children,
@@ -56,7 +41,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, first_name, last_name, role, onboarding_complete, is_super_admin, organizations ( name, status )')
+    .select('org_id, first_name, last_name, role, language, onboarding_complete, is_super_admin, organizations ( name, status )')
     .eq('user_id', user.id)
     .maybeSingle<ProfileRecord>();
 
@@ -93,7 +78,10 @@ export default async function AdminLayout({
     user.email ||
     'Account';
 
+  const locale = (profile?.language === 'es' ? 'es' : 'en') as 'en' | 'es';
+
   return (
+    <LocaleWrapper locale={locale}>
     <div className="min-h-screen bg-slate-50">
       <div className="flex min-h-screen">
         {/* Sidebar */}
@@ -114,7 +102,7 @@ export default async function AdminLayout({
 
           {/* Nav */}
           <div className="flex-1 overflow-y-auto px-3 py-4">
-            <SidebarNav sections={navSections} />
+            <SidebarNav />
           </div>
 
           {/* Account */}
@@ -161,5 +149,6 @@ export default async function AdminLayout({
         }}
       />
     </div>
+    </LocaleWrapper>
   );
 }

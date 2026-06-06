@@ -2,12 +2,15 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { BookingsManager } from './bookings-manager';
+import { createAdminT } from '@/lib/admin-i18n';
+import type { AdminLocale } from '@/lib/admin-i18n';
 
 export const dynamic = 'force-dynamic';
 
 interface Profile {
   org_id: string;
   role: string;
+  language: string | null;
 }
 
 interface Booking {
@@ -37,10 +40,13 @@ export default async function AdminBookingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, role')
+    .select('org_id, role, language')
     .eq('user_id', user.id)
     .maybeSingle<Profile>();
   if (!profile?.org_id) redirect('/login');
+
+  const locale = (profile.language === 'es' ? 'es' : 'en') as AdminLocale;
+  const t = createAdminT(locale);
 
   const { data: bookings } = await supabase
     .from('bookings')
@@ -54,9 +60,9 @@ export default async function AdminBookingsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6 lg:py-8">
       <div className="mb-5 lg:mb-6">
-        <h1 className="text-xl font-bold text-slate-900 lg:text-2xl">Bookings</h1>
+        <h1 className="text-xl font-bold text-slate-900 lg:text-2xl">{t('admin.bookings.title')}</h1>
         <p className="mt-1 text-xs text-slate-500 lg:text-sm">
-          Manage incoming appointment requests.
+          {t('admin.bookings.description')}
         </p>
       </div>
       <BookingsManager

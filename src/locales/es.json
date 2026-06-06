@@ -174,5 +174,55 @@
   },
   "services": {
     "title": "Servicios"
+  },
+  "admin": {
+    "nav": {
+      "workspace": "Área de trabajo",
+      "marketing": "Marketing",
+      "projects": "Proyectos",
+      "photos": "Fotos",
+      "bookings": "Reservas",
+      "portfolio": "Portafolio",
+      "services": "Servicios"
+    },
+    "account": {
+      "myPhotos": "Mis fotos",
+      "mySettings": "Mi configuración",
+      "notifications": "Notificaciones",
+      "company": "Empresa",
+      "companyDashboard": "Panel de empresa",
+      "companySettings": "Configuración de empresa",
+      "billing": "Facturación",
+      "tags": "Etiquetas",
+      "support": "Soporte",
+      "helpCenter": "Centro de ayuda",
+      "chatWithSupport": "Chatear con soporte"
+    },
+    "projects": {
+      "title": "Proyectos",
+      "newProject": "Nuevo proyecto",
+      "manageUsers": "Gestionar usuarios",
+      "createProject": "Crear proyecto",
+      "allProjects": "Todos los proyectos",
+      "latestUploads": "Últimas subidas",
+      "totalProjects": "Proyectos totales",
+      "totalPhotos": "Fotos totales",
+      "unassignedPhotos": "Fotos sin asignar",
+      "photosNotLinked": "Fotos no vinculadas a ningún proyecto",
+      "noProjectsYet": "Aún no hay proyectos",
+      "createFirstProject": "Crea tu primer proyecto para empezar a documentar obras.",
+      "noProjectsAssigned": "Aún no se te han asignado proyectos.",
+      "noPhotosYet": "Aún no hay fotos",
+      "photosWillAppear": "Una vez que tu equipo suba fotos, aparecerán aquí.",
+      "created": "Creado",
+      "photo": "foto",
+      "photoPlural": "fotos",
+      "project": "proyecto",
+      "projectPlural": "proyectos"
+    },
+    "bookings": {
+      "title": "Reservas",
+      "description": "Gestiona las solicitudes de citas entrantes."
+    }
   }
 }

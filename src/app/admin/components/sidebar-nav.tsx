@@ -3,18 +3,7 @@
 import { type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon?: string;
-  badge?: string;
-}
-
-interface NavSection {
-  label?: string;
-  items: NavItem[];
-}
+import { useLocale } from '@/lib/i18n';
 
 const icons: Record<string, ReactNode> = {
   projects: (
@@ -84,18 +73,35 @@ const icons: Record<string, ReactNode> = {
   ),
 };
 
-export function SidebarNav({ sections }: { sections: NavSection[] }) {
+export function SidebarNav() {
+  const { t } = useLocale();
   const pathname = usePathname();
+
+  const sections = [
+    {
+      labelKey: 'admin.nav.workspace',
+      items: [
+        { labelKey: 'admin.nav.projects', href: '/admin/projects', icon: 'projects' },
+        { labelKey: 'admin.nav.photos', href: '/admin/photos', icon: 'photos' },
+        { labelKey: 'admin.nav.bookings', href: '/admin/bookings', icon: 'bookings' },
+      ],
+    },
+    {
+      labelKey: 'admin.nav.marketing',
+      items: [
+        { labelKey: 'admin.nav.portfolio', href: '/admin/portfolio', icon: 'portfolio' },
+        { labelKey: 'admin.nav.services', href: '/admin/services', icon: 'services' },
+      ],
+    },
+  ];
 
   return (
     <nav className="flex flex-col gap-6">
       {sections.map((section) => (
-        <div key={section.label ?? section.items[0]?.href}>
-          {section.label ? (
-            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              {section.label}
-            </p>
-          ) : null}
+        <div key={section.labelKey}>
+          <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            {t(section.labelKey)}
+          </p>
           <ul className="space-y-0.5">
             {section.items.map((item) => {
               const active =
@@ -112,14 +118,9 @@ export function SidebarNav({ sections }: { sections: NavSection[] }) {
                     }`}
                   >
                     <span className={active ? 'text-amber-600' : 'text-slate-400'}>
-                      {item.icon && icons[item.icon] ? icons[item.icon] : null}
+                      {icons[item.icon] ?? null}
                     </span>
-                    <span>{item.label}</span>
-                    {item.badge ? (
-                      <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                        {item.badge}
-                      </span>
-                    ) : null}
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </li>
               );
