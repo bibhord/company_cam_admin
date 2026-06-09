@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Playfair_Display } from 'next/font/google';
 import { r2SignedUrl } from '@/lib/r2';
 
@@ -304,9 +305,10 @@ export default async function PortfolioPage({ params }: RouteParams) {
 
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {projectList.map((p) => (
-                <div
+                <Link
                   key={p.id}
-                  className="group relative overflow-hidden rounded-2xl bg-slate-100"
+                  href={`/portfolio/${slug}/projects/${p.id}`}
+                  className="group relative block overflow-hidden rounded-2xl bg-slate-100"
                   style={{ aspectRatio: '4/3' }}
                 >
                   {covers[p.id] ? (
@@ -336,7 +338,7 @@ export default async function PortfolioPage({ params }: RouteParams) {
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 sm:hidden">
                     <p className="text-sm font-semibold text-white">{p.name}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
