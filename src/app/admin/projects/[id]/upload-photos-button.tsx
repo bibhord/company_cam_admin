@@ -10,30 +10,40 @@ export function UploadPhotosButton({ projectId }: { projectId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failures, setFailures] = useState<Array<{ name: string; reason: string; sizeMB: string }>>([]);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
     setUploading(true);
-    setError(null);
+    setFailures([]);
     setProgress({ done: 0, total: files.length });
 
-    let failed = 0;
+    const newFailures: Array<{ name: string; reason: string; sizeMB: string }> = [];
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       const fd = new FormData();
       fd.append('file', file);
       fd.append('projectId', projectId);
       try {
         const res = await fetch('/api/m/upload', { method: 'POST', body: fd });
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || 'Upload failed');
+          let reason = `HTTP ${res.status}`;
+          try {
+            const data = await res.json();
+            if (data?.error) reason = data.error;
+          } catch {
+            const text = await res.text().catch(() => '');
+            if (text) reason = text.slice(0, 200);
+          }
+          if (res.status === 413) reason = `File too large (${sizeMB} MB) — server limit ~4.5 MB`;
+          throw new Error(reason);
         }
       } catch (err) {
-        failed += 1;
+        const reason = err instanceof Error ? err.message : String(err);
+        newFailures.push({ name: file.name, reason, sizeMB });
         console.error('Upload failed for', file.name, err);
       }
       setProgress({ done: i + 1, total: files.length });
@@ -41,11 +51,8 @@ export function UploadPhotosButton({ projectId }: { projectId: string }) {
 
     setUploading(false);
     setProgress(null);
+    setFailures(newFailures);
     if (inputRef.current) inputRef.current.value = '';
-
-    if (failed > 0) {
-      setError(t('admin.projectDetail.uploadFailed').replace('{{count}}', String(failed)));
-    }
     router.refresh();
   }
 
@@ -74,7 +81,22 @@ export function UploadPhotosButton({ projectId }: { projectId: string }) {
           </>
         )}
       </button>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {failures.length > 0 && (
+        <div className="mt-2 w-72 rounded-lg border border-red-200 bg-red-50 p-3 text-left">
+          <p className="text-xs font-semibold text-red-700">
+            {t('admin.projectDetail.uploadFailed').replace('{{count}}', String(failures.length))}
+          </p>
+          <ul className="mt-1.5 space-y-1.5">
+            {failures.map((f, i) => (
+              <li key={i} className="text-[11px] leading-tight text-red-700">
+                <span className="font-medium">{f.name}</span>
+                <span className="text-red-500"> · {f.sizeMB} MB</span>
+                <div className="text-red-600">{f.reason}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <input
         ref={inputRef}
         type="file"
