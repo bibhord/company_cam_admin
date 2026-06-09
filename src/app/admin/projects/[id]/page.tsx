@@ -7,6 +7,7 @@ import { PhotoCard } from '../../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../../types';
 import { ShareProjectButton } from './share-button';
 import { UploadPhotosButton } from './upload-photos-button';
+import { ProjectStatusPicker } from './status-picker';
 import { r2SignedUrl } from '@/lib/r2';
 import { createAdminT, type AdminLocale } from '@/lib/admin-i18n';
 
@@ -111,7 +112,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
 
   let projectQuery = supabase
     .from('projects')
-    .select('id, name, created_by, org_id, created_at')
+    .select('id, name, created_by, org_id, created_at, status')
     .eq('org_id', profile.org_id)
     .eq('id', projectId);
 
@@ -283,6 +284,9 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                 .replace('{{date}}', formatDate(project.created_at, locale, t('admin.projectDetail.unknownDate')))
                 .replace('{{user}}', project.created_by ?? t('admin.projectDetail.unknownUser'))}
             </p>
+            {canEdit && (
+              <ProjectStatusPicker projectId={project.id} initialStatus={project.status ?? null} />
+            )}
           </div>
           {canEdit && (
             <div className="flex items-start gap-2">

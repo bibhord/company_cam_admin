@@ -31,6 +31,7 @@ export interface ProjectRecord {
   created_by: string | null;
   org_id: string | null;
   created_at: string | null;
+  status?: 'not_started' | 'in_progress' | 'blocked' | 'completed' | null;
 }
 
 export interface ProfileRow {
