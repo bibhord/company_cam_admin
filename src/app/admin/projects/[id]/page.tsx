@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation';
 import { PhotoCard } from '../../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../../types';
 import { ShareProjectButton } from './share-button';
+import { UploadPhotosButton } from './upload-photos-button';
 import { r2SignedUrl } from '@/lib/r2';
 import { createAdminT, type AdminLocale } from '@/lib/admin-i18n';
 
@@ -283,7 +284,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                 .replace('{{user}}', project.created_by ?? t('admin.projectDetail.unknownUser'))}
             </p>
           </div>
-          {canEdit && <ShareProjectButton projectId={project.id} />}
+          {canEdit && (
+            <div className="flex items-start gap-2">
+              <UploadPhotosButton projectId={project.id} />
+              <ShareProjectButton projectId={project.id} />
+            </div>
+          )}
         </header>
 
         {photoRecords.length === 0 ? (

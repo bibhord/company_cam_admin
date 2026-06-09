@@ -254,7 +254,10 @@
       "noPages": "No pages have been created for this project.",
       "errorProfile": "Unable to load profile information. Please verify your Supabase policies and try again.",
       "errorProject": "Error loading project details. Please confirm your row-level security policies.",
-      "errorPhotos": "Error loading photos for this project. Please confirm your row-level security policies."
+      "errorPhotos": "Error loading photos for this project. Please confirm your row-level security policies.",
+      "uploadPhotos": "Upload Photos",
+      "uploading": "Uploading {{done}}/{{total}}…",
+      "uploadFailed": "{{count}} upload(s) failed"
     }
   }
 }

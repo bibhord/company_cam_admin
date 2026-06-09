@@ -254,7 +254,10 @@
       "noPages": "No se han creado páginas para este proyecto.",
       "errorProfile": "No se pudo cargar la información del perfil. Verifica tus políticas de Supabase e intenta de nuevo.",
       "errorProject": "Error al cargar los detalles del proyecto. Verifica tus políticas de seguridad por fila.",
-      "errorPhotos": "Error al cargar las fotos de este proyecto. Verifica tus políticas de seguridad por fila."
+      "errorPhotos": "Error al cargar las fotos de este proyecto. Verifica tus políticas de seguridad por fila.",
+      "uploadPhotos": "Subir fotos",
+      "uploading": "Subiendo {{done}}/{{total}}…",
+      "uploadFailed": "{{count}} carga(s) fallaron"
     }
   }
 }
