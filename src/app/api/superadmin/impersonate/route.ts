@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const { data: linkData, error: linkErr } = await svc.auth.admin.generateLink({
     type: 'magiclink',
     email: targetAuth.user.email,
-    options: { redirectTo: `${appUrl}/auth/callback?next=/admin` },
+    options: { redirectTo: `${appUrl}/auth/magic-callback?next=/admin` },
   });
 
   if (linkErr || !linkData?.properties?.action_link) {
