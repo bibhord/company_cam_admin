@@ -7,10 +7,12 @@ import { PhotoCard } from '../../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../../types';
 import { ShareProjectButton } from './share-button';
 import { r2SignedUrl } from '@/lib/r2';
+import { createAdminT, type AdminLocale } from '@/lib/admin-i18n';
 
 interface ProfileRecord {
   org_id: string;
   role: 'admin' | 'manager' | 'standard' | 'restricted';
+  language: string | null;
 }
 
 interface RouteParams {
@@ -58,11 +60,9 @@ interface AlbumRow {
   created_at: string;
 }
 
-const formatDate = (value: string | null) => {
-  if (!value) {
-    return 'Unknown date';
-  }
-  return new Date(value).toLocaleDateString(undefined, {
+const formatDate = (value: string | null, locale: AdminLocale, fallback: string) => {
+  if (!value) return fallback;
+  return new Date(value).toLocaleDateString(locale === 'es' ? 'es-ES' : undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -90,27 +90,22 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('org_id, role')
+    .select('org_id, role, language')
     .eq('user_id', user.id)
     .single<ProfileRecord>();
 
-  if (profileError) {
+  if (profileError || !profile) {
     console.error('Error loading profile:', profileError);
+    const fallbackT = createAdminT('en');
     return (
       <div className="p-8 text-red-500">
-        Unable to load profile information. Please verify your Supabase policies and try again.
+        {fallbackT('admin.projectDetail.errorProfile')}
       </div>
     );
   }
 
-  if (!profile) {
-    return (
-      <div className="p-8 text-red-500">
-        Unable to locate your user profile. Please contact support.
-      </div>
-    );
-  }
-
+  const locale = (profile.language === 'es' ? 'es' : 'en') as AdminLocale;
+  const t = createAdminT(locale);
   const canEdit = profile.role === 'admin' || profile.role === 'manager';
 
   let projectQuery = supabase
@@ -129,7 +124,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
     console.error('Error loading project:', projectError);
     return (
       <div className="p-8 text-red-500">
-        Error loading project details. Please confirm your row-level security policies.
+        {t('admin.projectDetail.errorProject')}
       </div>
     );
   }
@@ -170,7 +165,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
     console.error('Error fetching project photos:', photosError);
     return (
       <div className="p-8 text-red-500">
-        Error loading photos for this project. Please confirm your row-level security policies.
+        {t('admin.projectDetail.errorPhotos')}
       </div>
     );
   }
@@ -278,12 +273,14 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">
               <Link href="/admin" className="text-indigo-600 hover:text-indigo-700">
-                ← Back to dashboard
+                {t('admin.projectDetail.backToDashboard')}
               </Link>
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-gray-900">{project.name ?? 'Untitled Project'}</h1>
+            <h1 className="mt-2 text-3xl font-bold text-gray-900">{project.name ?? t('admin.projectDetail.untitled')}</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Created on {formatDate(project.created_at)} by {project.created_by ?? 'Unknown user'}
+              {t('admin.projectDetail.createdBy')
+                .replace('{{date}}', formatDate(project.created_at, locale, t('admin.projectDetail.unknownDate')))
+                .replace('{{user}}', project.created_by ?? t('admin.projectDetail.unknownUser'))}
             </p>
           </div>
           {canEdit && <ShareProjectButton projectId={project.id} />}
@@ -292,8 +289,8 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         {photoRecords.length === 0 ? (
           <div className="rounded-xl bg-white p-8 text-center text-gray-600 shadow-sm">
             {canEdit
-              ? 'No photos have been uploaded for this project yet.'
-              : 'You have not captured any photos for this project yet.'}
+              ? t('admin.projectDetail.noPhotosAdmin')
+              : t('admin.projectDetail.noPhotosUser')}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -305,12 +302,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
       </div>
       <section className="mx-auto mt-10 max-w-5xl space-y-6">
         <ProjectDetailSection
-          title="Labels"
+          title={t('admin.projectDetail.labels')}
           actionHref={`/admin/projects/${project.id}/labels`}
-          actionLabel="Add Labels"
+          actionLabel={t('admin.projectDetail.addLabels')}
         >
           {labels.length === 0 ? (
-            <p className="text-sm text-slate-600">No labels assigned yet.</p>
+            <p className="text-sm text-slate-600">{t('admin.projectDetail.noLabels')}</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {labels.map((label) => (
@@ -326,12 +323,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         </ProjectDetailSection>
 
         <ProjectDetailSection
-          title="Checklists"
+          title={t('admin.projectDetail.checklists')}
           actionHref={`/admin/projects/${project.id}/checklists/new`}
-          actionLabel="Add Checklist"
+          actionLabel={t('admin.projectDetail.addChecklist')}
         >
           {checklistSummaries.length === 0 ? (
-            <p className="text-sm text-slate-600">No checklists have been created for this project.</p>
+            <p className="text-sm text-slate-600">{t('admin.projectDetail.noChecklists')}</p>
           ) : (
             <ul className="grid gap-3 md:grid-cols-2">
               {checklistSummaries.map((checklist) => (
@@ -340,7 +337,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                     <div>
                       <h3 className="text-sm font-semibold text-slate-900">{checklist.name}</h3>
                       <p className="text-xs text-slate-500">
-                        Created {new Date(checklist.createdAt).toLocaleDateString()}
+                        {t('admin.projectDetail.created')} {new Date(checklist.createdAt).toLocaleDateString(locale === 'es' ? 'es-ES' : undefined)}
                       </p>
                     </div>
                     <span
@@ -348,7 +345,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                         checklist.isFinished ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
-                      {checklist.isFinished ? 'Finished' : 'In progress'}
+                      {checklist.isFinished ? t('admin.projectDetail.finished') : t('admin.projectDetail.inProgress')}
                     </span>
                   </div>
                   <div className="mt-3 h-2 rounded-full bg-slate-200">
@@ -358,7 +355,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                     />
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    {checklist.done}/{checklist.total} items complete
+                    {checklist.done}/{checklist.total} {t('admin.projectDetail.itemsComplete')}
                   </p>
                 </li>
               ))}
@@ -367,12 +364,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         </ProjectDetailSection>
 
         <ProjectDetailSection
-          title="Reports"
+          title={t('admin.projectDetail.reports')}
           actionHref={`/admin/reports/new?projectId=${project.id}`}
-          actionLabel="Add Report"
+          actionLabel={t('admin.projectDetail.addReport')}
         >
           {reports.length === 0 ? (
-            <p className="text-sm text-slate-600">No reports generated yet.</p>
+            <p className="text-sm text-slate-600">{t('admin.projectDetail.noReports')}</p>
           ) : (
             <ul className="space-y-3 text-sm text-slate-700">
               {reports.map((report) => (
@@ -383,14 +380,14 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                   <div>
                     <p className="font-semibold text-slate-900">{report.title}</p>
                     <p className="text-xs text-slate-500">
-                      Created {new Date(report.created_at).toLocaleDateString()}
+                      {t('admin.projectDetail.created')} {new Date(report.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : undefined)}
                     </p>
                   </div>
                   <Link
                     href={`/admin/reports/${report.id}`}
                     className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
                   >
-                    View
+                    {t('admin.projectDetail.view')}
                   </Link>
                 </li>
               ))}
@@ -399,12 +396,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         </ProjectDetailSection>
 
         <ProjectDetailSection
-          title="Project Documents"
+          title={t('admin.projectDetail.projectDocuments')}
           actionHref={`/admin/projects/${project.id}/documents/upload`}
-          actionLabel="Add Documents"
+          actionLabel={t('admin.projectDetail.addDocuments')}
         >
           {documents.length === 0 ? (
-            <p className="text-sm text-slate-600">No documents uploaded for this project.</p>
+            <p className="text-sm text-slate-600">{t('admin.projectDetail.noDocuments')}</p>
           ) : (
             <ul className="space-y-2 text-sm text-slate-700">
               {documents.map((doc) => (
@@ -414,7 +411,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
                     href={`/admin/projects/${project.id}/documents/${doc.id}`}
                     className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
                   >
-                    View
+                    {t('admin.projectDetail.view')}
                   </Link>
                 </li>
               ))}
@@ -423,12 +420,12 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         </ProjectDetailSection>
 
         <ProjectDetailSection
-          title="Pages"
+          title={t('admin.projectDetail.pages')}
           actionHref={`/admin/projects/${project.id}/albums/new`}
-          actionLabel="Add Pages"
+          actionLabel={t('admin.projectDetail.addPages')}
         >
           {albums.length === 0 ? (
-            <p className="text-sm text-slate-600">No pages have been created for this project.</p>
+            <p className="text-sm text-slate-600">{t('admin.projectDetail.noPages')}</p>
           ) : (
             <ul className="space-y-3 text-sm text-slate-700">
               {albums.map((album) => (

@@ -223,6 +223,38 @@
     "bookings": {
       "title": "Bookings",
       "description": "Manage incoming appointment requests."
+    },
+    "projectDetail": {
+      "backToDashboard": "← Back to dashboard",
+      "untitled": "Untitled Project",
+      "unknownDate": "Unknown date",
+      "unknownUser": "Unknown user",
+      "createdBy": "Created on {{date}} by {{user}}",
+      "noPhotosAdmin": "No photos have been uploaded for this project yet.",
+      "noPhotosUser": "You have not captured any photos for this project yet.",
+      "labels": "Labels",
+      "addLabels": "Add Labels",
+      "noLabels": "No labels assigned yet.",
+      "checklists": "Checklists",
+      "addChecklist": "Add Checklist",
+      "noChecklists": "No checklists have been created for this project.",
+      "finished": "Finished",
+      "inProgress": "In progress",
+      "created": "Created",
+      "itemsComplete": "items complete",
+      "reports": "Reports",
+      "addReport": "Add Report",
+      "noReports": "No reports generated yet.",
+      "view": "View",
+      "projectDocuments": "Project Documents",
+      "addDocuments": "Add Documents",
+      "noDocuments": "No documents uploaded for this project.",
+      "pages": "Pages",
+      "addPages": "Add Pages",
+      "noPages": "No pages have been created for this project.",
+      "errorProfile": "Unable to load profile information. Please verify your Supabase policies and try again.",
+      "errorProject": "Error loading project details. Please confirm your row-level security policies.",
+      "errorPhotos": "Error loading photos for this project. Please confirm your row-level security policies."
     }
   }
 }

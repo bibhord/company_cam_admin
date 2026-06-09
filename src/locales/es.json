@@ -223,6 +223,38 @@
     "bookings": {
       "title": "Reservas",
       "description": "Gestiona las solicitudes de citas entrantes."
+    },
+    "projectDetail": {
+      "backToDashboard": "← Volver al panel",
+      "untitled": "Proyecto sin título",
+      "unknownDate": "Fecha desconocida",
+      "unknownUser": "Usuario desconocido",
+      "createdBy": "Creado el {{date}} por {{user}}",
+      "noPhotosAdmin": "Aún no se han subido fotos para este proyecto.",
+      "noPhotosUser": "Aún no has capturado fotos para este proyecto.",
+      "labels": "Etiquetas",
+      "addLabels": "Agregar etiquetas",
+      "noLabels": "Aún no se han asignado etiquetas.",
+      "checklists": "Listas de verificación",
+      "addChecklist": "Agregar lista",
+      "noChecklists": "No se han creado listas de verificación para este proyecto.",
+      "finished": "Terminado",
+      "inProgress": "En progreso",
+      "created": "Creado",
+      "itemsComplete": "elementos completados",
+      "reports": "Reportes",
+      "addReport": "Agregar reporte",
+      "noReports": "Aún no se han generado reportes.",
+      "view": "Ver",
+      "projectDocuments": "Documentos del proyecto",
+      "addDocuments": "Agregar documentos",
+      "noDocuments": "No se han subido documentos para este proyecto.",
+      "pages": "Páginas",
+      "addPages": "Agregar páginas",
+      "noPages": "No se han creado páginas para este proyecto.",
+      "errorProfile": "No se pudo cargar la información del perfil. Verifica tus políticas de Supabase e intenta de nuevo.",
+      "errorProject": "Error al cargar los detalles del proyecto. Verifica tus políticas de seguridad por fila.",
+      "errorPhotos": "Error al cargar las fotos de este proyecto. Verifica tus políticas de seguridad por fila."
     }
   }
 }
