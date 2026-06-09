@@ -32,7 +32,13 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
   const router = useRouter();
   const [tagsInput, setTagsInput] = useState(() => {
     if (Array.isArray(photo.tags)) return photo.tags.join(', ');
-    if (typeof photo.tags === 'string') return photo.tags;
+    if (typeof photo.tags === 'string') {
+      try {
+        const parsed = JSON.parse(photo.tags);
+        if (Array.isArray(parsed)) return parsed.join(', ');
+      } catch {}
+      return photo.tags;
+    }
     return '';
   });
   const [notesInput, setNotesInput] = useState(() => photo.notes ?? '');
