@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -10,7 +10,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
  * the browser can read. The Supabase client auto-detects this on mount, writes
  * the session to cookies, then we hard-navigate so the middleware sees it.
  */
-export default function MagicCallbackPage() {
+function MagicCallback() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/admin';
   const [error, setError] = useState<string | null>(null);
@@ -37,19 +37,27 @@ export default function MagicCallbackPage() {
   }, [next]);
 
   return (
+    <div className="text-center">
+      {error ? (
+        <>
+          <p className="text-sm font-semibold text-red-600">{error}</p>
+          <a href="/login" className="mt-3 inline-block text-sm text-amber-600 underline">
+            Back to login
+          </a>
+        </>
+      ) : (
+        <p className="text-sm text-slate-500">Signing you in…</p>
+      )}
+    </div>
+  );
+}
+
+export default function MagicCallbackPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="text-center">
-        {error ? (
-          <>
-            <p className="text-sm font-semibold text-red-600">{error}</p>
-            <a href="/login" className="mt-3 inline-block text-sm text-amber-600 underline">
-              Back to login
-            </a>
-          </>
-        ) : (
-          <p className="text-sm text-slate-500">Signing you in…</p>
-        )}
-      </div>
+      <Suspense fallback={<p className="text-sm text-slate-500">Signing you in…</p>}>
+        <MagicCallback />
+      </Suspense>
     </div>
   );
 }
