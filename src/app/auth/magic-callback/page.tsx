@@ -6,9 +6,10 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 /**
  * Client-side callback for magic links generated via `auth.admin.generateLink()`.
- * Supabase returns the session in the URL hash (#access_token=...), which only
- * the browser can read. The Supabase client auto-detects this on mount, writes
- * the session to cookies, then we hard-navigate so the middleware sees it.
+ * Supabase returns the session in the URL hash (#access_token=...&refresh_token=...),
+ * which only the browser can read. We parse it manually, call setSession() so the
+ * auth-helpers client writes cookies, then hard-navigate so the middleware picks up
+ * the session.
  */
 function MagicCallback() {
   const searchParams = useSearchParams();
@@ -16,24 +17,34 @@ function MagicCallback() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClientComponentClient();
-
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts += 1;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        clearInterval(interval);
-        window.location.href = next;
+    async function run() {
+      const hash = window.location.hash.replace(/^#/, '');
+      if (!hash) {
+        setError('Sign-in link is invalid or has expired.');
         return;
       }
-      if (attempts >= 20) {
-        clearInterval(interval);
-        setError('Sign-in link is invalid or has expired.');
+      const params = new URLSearchParams(hash);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      const errParam = params.get('error_description') || params.get('error');
+      if (errParam) {
+        setError(decodeURIComponent(errParam));
+        return;
       }
-    }, 150);
+      if (!access_token || !refresh_token) {
+        setError('Sign-in link is invalid or has expired.');
+        return;
+      }
 
-    return () => clearInterval(interval);
+      const supabase = createClientComponentClient();
+      const { error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (setErr) {
+        setError(setErr.message);
+        return;
+      }
+      window.location.href = next;
+    }
+    run();
   }, [next]);
 
   return (
