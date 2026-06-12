@@ -8,7 +8,11 @@ export const dynamic = 'force-dynamic';
 interface ProfileRecord {
   org_id: string | null;
   role: string;
-  organizations: { id: string; name: string | null } | null;
+  organizations: {
+    id: string;
+    name: string | null;
+    portfolio_slug: string | null;
+  } | null;
 }
 
 export default async function CompanySettingsPage() {
@@ -18,7 +22,7 @@ export default async function CompanySettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id, role, organizations ( id, name )')
+    .select('org_id, role, organizations ( id, name, portfolio_slug )')
     .eq('user_id', user.id)
     .single<ProfileRecord>();
 
@@ -36,6 +40,7 @@ export default async function CompanySettingsPage() {
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
         <CompanySettingsForm
           initialName={profile.organizations.name ?? ''}
+          initialSlug={profile.organizations.portfolio_slug ?? ''}
           canEdit={canEdit}
         />
       </div>
