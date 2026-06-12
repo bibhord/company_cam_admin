@@ -3,11 +3,11 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { PhotoCard } from '../../photo-card';
 import type { PhotoRecord, ProjectRecord } from '../../types';
 import { ShareProjectButton } from './share-button';
 import { UploadPhotosButton } from './upload-photos-button';
 import { ProjectStatusPicker } from './status-picker';
+import { PhotosFilter } from './photos-filter';
 import { r2SignedUrl } from '@/lib/r2';
 import { createAdminT, type AdminLocale } from '@/lib/admin-i18n';
 
@@ -147,6 +147,7 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
         object_key,
         notes,
         tags,
+        bucket,
         upload_status,
         status,
         created_by,
@@ -296,19 +297,11 @@ export default async function ProjectDetailPage({ params }: RouteParams) {
           )}
         </header>
 
-        {photoRecords.length === 0 ? (
-          <div className="rounded-xl bg-white p-8 text-center text-gray-600 shadow-sm">
-            {canEdit
-              ? t('admin.projectDetail.noPhotosAdmin')
-              : t('admin.projectDetail.noPhotosUser')}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {photoRecords.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} canEdit={canEdit} />
-            ))}
-          </div>
-        )}
+        <PhotosFilter
+          photos={photoRecords}
+          canEdit={canEdit}
+          emptyMessage={canEdit ? t('admin.projectDetail.noPhotosAdmin') : t('admin.projectDetail.noPhotosUser')}
+        />
       </div>
       <section className="mx-auto mt-10 max-w-5xl space-y-6">
         <ProjectDetailSection

@@ -42,6 +42,7 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
     return '';
   });
   const [notesInput, setNotesInput] = useState(() => photo.notes ?? '');
+  const [bucketInput, setBucketInput] = useState<'before' | 'after' | ''>(() => photo.bucket ?? '');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -95,7 +96,7 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
       const response = await fetch(`/api/admin/photos/${photo.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tags: tagsInput, notes: notesInput }),
+        body: JSON.stringify({ tags: tagsInput, notes: notesInput, bucket: bucketInput === '' ? null : bucketInput }),
       });
 
       if (!response.ok) {
@@ -160,7 +161,14 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
           </div>
         )}
         {/* Status badge */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex items-center gap-1">
+          {photo.bucket && (
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm ${
+              photo.bucket === 'before' ? 'bg-blue-600/90 text-white' : 'bg-emerald-600/90 text-white'
+            }`}>
+              {photo.bucket === 'before' ? 'Before' : 'After'}
+            </span>
+          )}
           <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-slate-600 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
             {statusLabel}
@@ -215,6 +223,32 @@ export function PhotoCard({ photo, canEdit }: PhotoCardProps) {
                 className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
                 placeholder="roof, before, damage"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                Category
+              </label>
+              <div className="flex gap-1">
+                {([
+                  { v: '', label: 'Unset' },
+                  { v: 'before', label: 'Before' },
+                  { v: 'after', label: 'After' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setBucketInput(opt.v)}
+                    className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                      bucketInput === opt.v
+                        ? 'border-slate-800 bg-slate-800 text-white'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

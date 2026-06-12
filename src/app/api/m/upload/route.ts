@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
   const lonRaw = formData.get('lon') as string | null;
   const lat = latRaw ? Number(latRaw) : null;
   const lon = lonRaw ? Number(lonRaw) : null;
+  const bucketRaw = formData.get('bucket') as string | null;
+  const bucket: 'before' | 'after' | null =
+    bucketRaw === 'before' || bucketRaw === 'after' ? bucketRaw : null;
 
   if (!file) {
     return NextResponse.json({ error: 'File is required.' }, { status: 400 });
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest) {
       upload_status: 'uploaded',
       lat: lat ?? null,
       lon: lon ?? null,
+      bucket,
     })
     .select()
     .single();

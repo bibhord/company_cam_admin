@@ -257,7 +257,11 @@
       "errorPhotos": "Error al cargar las fotos de este proyecto. Verifica tus políticas de seguridad por fila.",
       "uploadPhotos": "Subir fotos",
       "uploading": "Subiendo {{done}}/{{total}}…",
-      "uploadFailed": "{{count}} carga(s) fallaron"
+      "uploadFailed": "{{count}} carga(s) fallaron",
+      "before": "Antes",
+      "after": "Después",
+      "unset": "Sin clasificar",
+      "allPhotos": "Todas"
     }
   }
 }

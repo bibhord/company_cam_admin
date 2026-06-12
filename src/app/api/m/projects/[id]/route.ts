@@ -66,7 +66,7 @@ export async function GET(
   // Fetch project photos with signed URLs
   const { data: photos, error: photosError } = await supabase
     .from('photos')
-    .select('id, name, object_key, notes, created_at')
+    .select('id, name, object_key, notes, bucket, created_at')
     .eq('project_id', id)
     .eq('org_id', profile.org_id)
     .order('created_at', { ascending: false });
@@ -87,6 +87,7 @@ export async function GET(
         id: photo.id,
         name: photo.name,
         notes: photo.notes,
+        bucket: photo.bucket ?? null,
         created_at: photo.created_at,
         signed_url: signedUrl,
       };

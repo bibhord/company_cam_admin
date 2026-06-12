@@ -77,7 +77,7 @@ export async function PATCH(
 
   const supabase = adminContext.supabase;
 
-  let payload: { tags?: unknown; notes?: unknown };
+  let payload: { tags?: unknown; notes?: unknown; bucket?: unknown };
   try {
     payload = await request.json();
   } catch (error) {
@@ -124,6 +124,16 @@ export async function PATCH(
     tags: normalizedTags,
     notes: normalizedNotes,
   };
+
+  if (payload.bucket !== undefined) {
+    if (payload.bucket === 'before' || payload.bucket === 'after') {
+      updates.bucket = payload.bucket;
+    } else if (payload.bucket === null || payload.bucket === '') {
+      updates.bucket = null;
+    } else {
+      return NextResponse.json({ error: 'Invalid bucket value.' }, { status: 400 });
+    }
+  }
 
   const { error: updateError } = await supabase
     .from('photos')

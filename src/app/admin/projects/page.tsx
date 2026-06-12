@@ -86,7 +86,7 @@ export default async function ProjectsPage() {
     .from('photos')
     .select(`
       id, name, url, created_at, project_id, object_key,
-      notes, tags, upload_status, status, created_by,
+      notes, tags, bucket, upload_status, status, created_by,
       projects ( name ),
       photo_annotations ( data )
     `)

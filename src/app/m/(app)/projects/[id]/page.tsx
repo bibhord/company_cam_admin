@@ -11,6 +11,7 @@ interface ProjectPhoto {
   id: string;
   name: string;
   notes: string | null;
+  bucket: 'before' | 'after' | null;
   signed_url: string | null;
   created_at: string;
 }
@@ -61,6 +62,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'photos' | 'details'>('photos');
+  const [bucketFilter, setBucketFilter] = useState<'all' | 'before' | 'after' | 'unset'>('all');
 
   // Details form
   const [saving, setSaving] = useState(false);
@@ -291,29 +293,77 @@ export default function ProjectDetailPage() {
                 <p className="mt-1 text-xs text-slate-500">{t('projects.detail.addPhotosPrompt')}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {project.photos.map((photo) => (
-                  <button
-                    key={photo.id}
-                    onClick={() => openPhotoEdit(photo)}
-                    className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
-                  >
-                    {photo.signed_url ? (
-                      <img src={photo.signed_url} alt={photo.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
-                      <p className="truncate text-xs font-medium text-white">{photo.name}</p>
-                      <p className="text-[10px] text-white/70">{timeAgo(photo.created_at, t)}</p>
+              <>
+                {/* Bucket filter */}
+                {(() => {
+                  const counts = {
+                    all: project.photos.length,
+                    before: project.photos.filter((p) => p.bucket === 'before').length,
+                    after: project.photos.filter((p) => p.bucket === 'after').length,
+                    unset: project.photos.filter((p) => !p.bucket).length,
+                  };
+                  const tabs: Array<{ v: typeof bucketFilter; label: string; count: number }> = [
+                    { v: 'all', label: t('admin.projectDetail.allPhotos'), count: counts.all },
+                    { v: 'before', label: t('admin.projectDetail.before'), count: counts.before },
+                    { v: 'after', label: t('admin.projectDetail.after'), count: counts.after },
+                  ];
+                  if (counts.unset > 0) tabs.push({ v: 'unset', label: t('admin.projectDetail.unset'), count: counts.unset });
+                  return (
+                    <div className="flex flex-wrap gap-1.5">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab.v}
+                          onClick={() => setBucketFilter(tab.v)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                            bucketFilter === tab.v
+                              ? 'bg-slate-800 text-white'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {tab.label} ({tab.count})
+                        </button>
+                      ))}
                     </div>
-                  </button>
-                ))}
-              </div>
+                  );
+                })()}
+
+                <div className="grid grid-cols-2 gap-2">
+                  {project.photos
+                    .filter((photo) => {
+                      if (bucketFilter === 'all') return true;
+                      if (bucketFilter === 'unset') return !photo.bucket;
+                      return photo.bucket === bucketFilter;
+                    })
+                    .map((photo) => (
+                      <button
+                        key={photo.id}
+                        onClick={() => openPhotoEdit(photo)}
+                        className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
+                      >
+                        {photo.signed_url ? (
+                          <img src={photo.signed_url} alt={photo.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                            </svg>
+                          </div>
+                        )}
+                        {photo.bucket && (
+                          <span className={`absolute top-1.5 left-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white shadow ${
+                            photo.bucket === 'before' ? 'bg-blue-600' : 'bg-emerald-600'
+                          }`}>
+                            {photo.bucket === 'before' ? t('admin.projectDetail.before') : t('admin.projectDetail.after')}
+                          </span>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
+                          <p className="truncate text-xs font-medium text-white">{photo.name}</p>
+                          <p className="text-[10px] text-white/70">{timeAgo(photo.created_at, t)}</p>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </>
             )}
 
             {/* Add photo button */}

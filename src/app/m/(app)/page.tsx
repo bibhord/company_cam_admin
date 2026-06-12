@@ -144,6 +144,7 @@ export default function PhotosPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [creatingProject, setCreatingProject] = useState(false);
   const [photoName, setPhotoName] = useState('');
+  const [pendingBucket, setPendingBucket] = useState<'before' | 'after' | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [reassigning, setReassigning] = useState(false);
   const [detailProjects, setDetailProjects] = useState<Project[]>([]);
@@ -320,6 +321,7 @@ export default function PhotosPage() {
     setProjectSearch('');
     setShowNewProject(false);
     setNewProjectName('');
+    setPendingBucket(null);
 
     // Reset input so same file can be re-selected
     if (fileInputRef.current) {
@@ -389,6 +391,9 @@ export default function PhotosPage() {
       if (trimmedName) {
         formData.append('photoName', trimmedName);
       }
+      if (pendingBucket) {
+        formData.append('bucket', pendingBucket);
+      }
 
       const res = await fetch('/api/m/upload', {
         method: 'POST',
@@ -442,6 +447,7 @@ export default function PhotosPage() {
   function closeModal() {
     setShowProjectModal(false);
     setPendingFile(null);
+    setPendingBucket(null);
   }
 
   async function openReassign() {
@@ -1056,6 +1062,31 @@ export default function PhotosPage() {
                 autoFocus
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
+            </div>
+
+            {/* Before / After selector */}
+            <div className="px-4 pt-3">
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">{t('admin.projectDetail.before')} / {t('admin.projectDetail.after')}</label>
+              <div className="flex gap-2">
+                {([
+                  { v: null, label: t('admin.projectDetail.unset') },
+                  { v: 'before' as const, label: t('admin.projectDetail.before') },
+                  { v: 'after' as const, label: t('admin.projectDetail.after') },
+                ]).map((opt) => (
+                  <button
+                    key={String(opt.v)}
+                    type="button"
+                    onClick={() => setPendingBucket(opt.v)}
+                    className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-colors ${
+                      pendingBucket === opt.v
+                        ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : 'border-slate-200 bg-white text-slate-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Search */}

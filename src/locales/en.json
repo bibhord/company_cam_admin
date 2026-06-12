@@ -257,7 +257,11 @@
       "errorPhotos": "Error loading photos for this project. Please confirm your row-level security policies.",
       "uploadPhotos": "Upload Photos",
       "uploading": "Uploading {{done}}/{{total}}…",
-      "uploadFailed": "{{count}} upload(s) failed"
+      "uploadFailed": "{{count}} upload(s) failed",
+      "before": "Before",
+      "after": "After",
+      "unset": "Unset",
+      "allPhotos": "All"
     }
   }
 }

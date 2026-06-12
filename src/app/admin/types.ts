@@ -7,6 +7,7 @@ export interface PhotoRecord {
   object_key: string | null;
   notes: string | null;
   tags: string[] | null;
+  bucket: 'before' | 'after' | null;
   upload_status: string | null;
   status: string | null;
   created_by: string | null;
