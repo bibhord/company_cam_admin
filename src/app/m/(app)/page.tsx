@@ -8,6 +8,8 @@ import { BeforeAfterSlider } from './components/before-after-slider';
 import { DictationButton } from './components/dictation-button';
 import { enqueueUpload, flushQueue, getPending } from '@/lib/upload-queue';
 import { getCurrentCoords, nearestPlace } from '@/lib/geo';
+import { compressImage } from '@/lib/compress-image';
+import { readPhotosCache, writePhotosCache } from '@/lib/photos-cache';
 import { AnnotationOverlay } from '@/components/annotations/annotation-overlay';
 import type { AnnotationDoc } from '@/lib/annotations';
 import { useLocale } from '@/lib/i18n';
@@ -242,12 +244,12 @@ export default function PhotosPage() {
   }
 
   async function fetchPhotos() {
-    setLoading(true);
     try {
       const res = await fetch('/api/m/photos');
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Photo[];
         setPhotos(data);
+        writePhotosCache(data);
       }
     } catch (err) {
       console.error('Failed to fetch photos:', err);
@@ -257,6 +259,15 @@ export default function PhotosPage() {
   }
 
   useEffect(() => {
+    // Stale-while-revalidate: render cached photos immediately for instant paint,
+    // then fetch fresh in the background.
+    const cached = readPhotosCache<Photo>();
+    if (cached && cached.length > 0) {
+      setPhotos(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     fetchPhotos();
   }, []);
 
@@ -361,30 +372,66 @@ export default function PhotosPage() {
     setUploading(true);
     setUploadError(null);
 
-    const file = pendingFile;
+    const originalFile = pendingFile;
     const trimmedName = photoName.trim();
+    const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const localUrl = URL.createObjectURL(originalFile);
+    const projectName =
+      projects.find((p) => p.id === projectId)?.name ?? null;
+
+    // Optimistic UI: drop the photo into the list immediately with a pending flag.
+    const optimistic: Photo = {
+      id: optimisticId,
+      name: trimmedName || originalFile.name.replace(/\.[^.]+$/, ''),
+      signed_url: localUrl,
+      project_id: projectId,
+      project_name: projectName,
+      created_at: new Date(0).toISOString(), // placeholder; freshness comes from fetch
+      tags: null,
+      notes: null,
+      annotations: null,
+      before_photo_id: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+    (optimistic as Photo & { _pending?: boolean })._pending = true;
+    setPhotos((prev) => [optimistic, ...prev]);
+    setPendingFile(null);
+    setUploading(false);
+
+    function clearOptimistic() {
+      setPhotos((prev) => prev.filter((p) => p.id !== optimisticId));
+      URL.revokeObjectURL(localUrl);
+    }
 
     async function queueForLater(reason: string) {
       try {
-        await enqueueUpload(file, trimmedName || file.name.replace(/\.[^.]+$/, ''), projectId);
+        await enqueueUpload(originalFile, trimmedName || originalFile.name.replace(/\.[^.]+$/, ''), projectId);
         await refreshPendingCount();
         setUploadError(`Saved offline — will sync when back online (${reason}).`);
       } catch (err) {
         setUploadError(`Couldn't save offline: ${err instanceof Error ? err.message : 'storage unavailable'}.`);
       }
+      clearOptimistic();
     }
 
     // If we're already offline, skip the network attempt.
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       await queueForLater('no connection');
-      setUploading(false);
-      setPendingFile(null);
       return;
+    }
+
+    // Client-side resize + JPEG re-encode. Skips automatically for small files.
+    let fileToUpload: File;
+    try {
+      fileToUpload = await compressImage(originalFile);
+    } catch (err) {
+      console.warn('compressImage failed, using original:', err);
+      fileToUpload = originalFile;
     }
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       if (projectId) {
         formData.append('projectId', projectId);
       }
@@ -401,7 +448,9 @@ export default function PhotosPage() {
       });
 
       if (res.ok) {
+        // Replace the optimistic photo with the freshly fetched real one.
         await fetchPhotos();
+        clearOptimistic();
       } else if (res.status >= 500 || res.status === 408) {
         // Server unavailable / timeout — keep the photo and retry later.
         await queueForLater(`server ${res.status}`);
@@ -409,13 +458,11 @@ export default function PhotosPage() {
         const data = await res.json().catch(() => ({}));
         const msg = data.error || `Upload failed (${res.status})`;
         setUploadError(msg);
+        clearOptimistic();
       }
     } catch (err) {
       // Network error — almost certainly transient, queue and move on.
       await queueForLater(err instanceof Error ? err.message : 'network error');
-    } finally {
-      setUploading(false);
-      setPendingFile(null);
     }
   }
 
@@ -617,35 +664,51 @@ export default function PhotosPage() {
           </div>
         ) : view === 'list' ? (
           <div className="space-y-2">
-            {photos.map((photo) => (
+            {photos.map((photo) => {
+              const isPending = photo.id.startsWith('optimistic-');
+              return (
               <button
                 key={photo.id}
-                onClick={() => setSelectedPhoto(photo)}
-                className="flex w-full items-center gap-3 rounded-xl bg-white p-3 shadow-sm text-left"
+                onClick={() => { if (!isPending) setSelectedPhoto(photo); }}
+                disabled={isPending}
+                className={`flex w-full items-center gap-3 rounded-xl bg-white p-3 shadow-sm text-left ${isPending ? 'opacity-70' : ''}`}
               >
-                <PhotoThumb
-                  photo={photo}
-                  className="h-14 w-14 shrink-0 overflow-hidden rounded-lg"
-                  iconClassName="h-6 w-6 text-slate-300"
-                  pairRole={photo.before_photo_id ? 'after' : afterByBeforeId.has(photo.id) ? 'before' : undefined}
-                />
+                <div className="relative h-14 w-14 shrink-0">
+                  <PhotoThumb
+                    photo={photo}
+                    className="h-14 w-14 overflow-hidden rounded-lg"
+                    iconClassName="h-6 w-6 text-slate-300"
+                    pairRole={photo.before_photo_id ? 'after' : afterByBeforeId.has(photo.id) ? 'before' : undefined}
+                  />
+                  {isPending && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">
+                      <svg className="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-900">{photo.name}</p>
                   {photo.project_name && (
                     <p className="truncate text-xs text-slate-500">{photo.project_name}</p>
                   )}
-                  <p className="text-xs text-slate-400">{timeAgo(photo.created_at, t)}</p>
+                  <p className="text-xs text-slate-400">{isPending ? 'Uploading…' : timeAgo(photo.created_at, t)}</p>
                 </div>
               </button>
-            ))}
+            );})}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            {photos.map((photo) => (
+            {photos.map((photo) => {
+              const isPending = photo.id.startsWith('optimistic-');
+              return (
               <button
                 key={photo.id}
-                onClick={() => setSelectedPhoto(photo)}
-                className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left"
+                onClick={() => { if (!isPending) setSelectedPhoto(photo); }}
+                disabled={isPending}
+                className={`relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left ${isPending ? 'opacity-80' : ''}`}
               >
                 <PhotoThumb
                   photo={photo}
@@ -656,8 +719,16 @@ export default function PhotosPage() {
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
                   <p className="truncate text-xs font-medium text-white">{photo.name}</p>
                 </div>
+                {isPending && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <svg className="h-8 w-8 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  </div>
+                )}
               </button>
-            ))}
+            );})}
           </div>
         )}
       </div>
