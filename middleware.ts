@@ -31,8 +31,16 @@ export async function middleware(req: NextRequest) {
     const m = hostNoPort.match(SUBDOMAIN_RE);
     if (m) {
       const slug = m[1];
-      // Don't double-rewrite if already on /portfolio path
-      if (!pathname.startsWith('/portfolio/')) {
+      // Don't rewrite paths that are already top-level: portfolio routes,
+      // the public booking pages (slug is already in the URL), API routes,
+      // and the auth callback. Without this, `/book/<slug>` on a subdomain
+      // gets rewritten to `/portfolio/<slug>/book/<slug>` which 404s.
+      const isTopLevel =
+        pathname.startsWith('/portfolio/') ||
+        pathname.startsWith('/book/') ||
+        pathname.startsWith('/api/') ||
+        pathname.startsWith('/auth/');
+      if (!isTopLevel) {
         const url = req.nextUrl.clone();
         url.pathname = `/portfolio/${slug}${pathname === '/' ? '' : pathname}`;
         return NextResponse.rewrite(url);
