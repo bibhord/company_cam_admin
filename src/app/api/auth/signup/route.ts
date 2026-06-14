@@ -39,6 +39,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  // Supabase's anti-enumeration behavior: when signUp is called with an
+  // email that's ALREADY registered, it returns a user object with an
+  // empty `identities` array instead of erroring. Treat that as a duplicate.
+  if (data.user && (data.user.identities ?? []).length === 0) {
+    return NextResponse.json(
+      { error: 'An account with this email already exists. Please sign in or reset your password.' },
+      { status: 409 },
+    );
+  }
+
   // Use service role client to bypass RLS for creating org + profile
   if (data.user) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -48,6 +58,23 @@ export async function POST(req: Request) {
       const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
+
+      // Belt-and-suspenders: also check for an existing profile row. This
+      // catches the edge case where signUp returned a non-empty identities
+      // array but we already provisioned this user (e.g. a retry after
+      // partial failure).
+      const { data: existingProfile } = await serviceClient
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', data.user.id)
+        .maybeSingle<{ user_id: string }>();
+
+      if (existingProfile) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists. Please sign in or reset your password.' },
+          { status: 409 },
+        );
+      }
 
       const displayName = [first_name, last_name].filter(Boolean).join(' ') || email;
       const orgName = displayName !== email
@@ -76,7 +103,14 @@ export async function POST(req: Request) {
       });
 
       if (profileError) {
-        console.error('Error creating profile:', profileError);
+        // Profile insert failed — roll back the org we just created so we
+        // don't leave orphans. Most likely a duplicate user_id from a race.
+        console.error('Error creating profile, rolling back org:', profileError);
+        await serviceClient.from('organizations').delete().eq('id', org.id);
+        return NextResponse.json(
+          { error: 'Unable to create account. Please try again.' },
+          { status: 500 },
+        );
       }
 
       await notifyNewSignup(email, displayName);

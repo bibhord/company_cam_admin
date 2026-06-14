@@ -65,11 +65,12 @@ export async function GET(request: Request) {
             });
 
             if (profileError) {
-              console.error('OAuth callback: failed to create profile:', profileError);
+              console.error('OAuth callback: failed to create profile, rolling back org:', profileError);
+              await serviceClient.from('organizations').delete().eq('id', org.id);
+            } else {
+              const displayName = user.user_metadata?.full_name || user.email || 'User';
+              await notifyNewSignup(user.email || '', displayName);
             }
-
-            const displayName = user.user_metadata?.full_name || user.email || 'User';
-            await notifyNewSignup(user.email || '', displayName);
           }
         }
       } else {
