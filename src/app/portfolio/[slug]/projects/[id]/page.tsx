@@ -40,16 +40,19 @@ export default async function PortfolioProjectPage({ params }: RouteParams) {
 
   const { data: photos } = await svc
     .from('photos')
-    .select('id, name, object_key, created_at')
+    .select('id, name, object_key, url, created_at')
     .eq('project_id', project.id)
     .neq('status', 'deleted')
     .order('created_at', { ascending: true });
 
   const signed = await Promise.all(
-    (photos ?? []).map(async (p) => ({
-      ...p,
-      url: p.object_key ? await r2SignedUrl(p.object_key, 3600).catch(() => null) : null,
-    })),
+    (photos ?? []).map(async (p) => {
+      const externalUrl = (p as { url: string | null }).url;
+      const signedUrl = p.object_key
+        ? await r2SignedUrl(p.object_key, 3600).catch(() => null)
+        : null;
+      return { ...p, url: signedUrl ?? externalUrl ?? null };
+    }),
   );
 
   return (

@@ -111,15 +111,17 @@ export default async function PortfolioPage({ params }: RouteParams) {
   for (const p of projectList) {
     const { data: photo } = await svc
       .from('photos')
-      .select('object_key')
+      .select('object_key, url')
       .eq('project_id', p.id)
       .neq('status', 'deleted')
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle<{ object_key: string }>();
-    covers[p.id] = photo?.object_key
-      ? await r2SignedUrl(photo.object_key, 3600).catch(() => null)
-      : null;
+      .maybeSingle<{ object_key: string | null; url: string | null }>();
+    if (photo?.object_key) {
+      covers[p.id] = await r2SignedUrl(photo.object_key, 3600).catch(() => photo.url ?? null);
+    } else {
+      covers[p.id] = photo?.url ?? null;
+    }
   }
 
   const heroUrl = projectList.length > 0 ? covers[projectList[0].id] : null;
