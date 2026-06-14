@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { BusinessHoursForm } from './business-hours-form';
+import { CalendarFeed } from './calendar-feed';
+import { buildIcalToken } from '@/lib/ical';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +54,14 @@ export default async function BusinessHoursPage() {
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
         <BusinessHoursForm orgId={profile.org_id} initial={hours} canEdit={canEdit} />
+      </div>
+
+      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">Sync to your calendar</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Add this link to Google Calendar, Apple Calendar, or Outlook to see new bookings appear automatically. Treat it as private — anyone with the URL can subscribe.
+        </p>
+        <CalendarFeed token={buildIcalToken(profile.org_id)} />
       </div>
     </div>
   );
