@@ -13,6 +13,7 @@ const SPECIALTIES = [
   { value: 'landscaper', label: 'Landscaper', labelEs: 'Jardinero', icon: '🌿' },
   { value: 'carpenter', label: 'Carpenter', labelEs: 'Carpintero', icon: '🪚' },
   { value: 'mason', label: 'Mason', labelEs: 'Albañil', icon: '🧱' },
+  { value: 'real_estate_photographer', label: 'Real Estate Photographer', labelEs: 'Fotógrafo de bienes raíces', icon: '📸' },
   { value: 'other', label: 'Other', labelEs: 'Otro', icon: '🔨' },
 ];
 
