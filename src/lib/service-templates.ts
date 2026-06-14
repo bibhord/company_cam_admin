@@ -160,6 +160,39 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
     ],
   },
   {
+    key: 'photographer',
+    label: 'Real Estate Photographer',
+    blurb: 'Property photography, drone, video, and 3D tours.',
+    categories: [
+      {
+        name: 'Photography Packages',
+        services: [
+          { name: 'HDR Photos — up to 1500 sqft', description: '25 edited HDR photos. Standard 24hr turnaround.', duration_min: 60,  price_cents: 19900, price_type: 'fixed' },
+          { name: 'HDR Photos — 1501–3000 sqft',  description: '35 edited HDR photos. Standard 24hr turnaround.', duration_min: 90,  price_cents: 24900, price_type: 'fixed' },
+          { name: 'HDR Photos — 3001+ sqft',      description: '50+ edited HDR photos. Standard 24hr turnaround.', duration_min: 120, price_cents: 29900, price_type: 'from' },
+          { name: 'Twilight Photos',              description: '5 dusk/twilight exterior shots.',                  duration_min: 45,  price_cents: 15000, price_type: 'fixed' },
+        ],
+      },
+      {
+        name: 'Video & 3D',
+        services: [
+          { name: 'Walkthrough Video',           description: '60–90 sec cinematic walkthrough with music.',         duration_min: 60, price_cents: 24900, price_type: 'fixed' },
+          { name: 'Aerial Drone Photos & Video', description: '10 aerial photos + 30s aerial clip.',                 duration_min: 45, price_cents: 19900, price_type: 'fixed' },
+          { name: '3D Matterport Tour',          description: 'Full interactive 3D walkthrough. Pricing per sqft.',  duration_min: 90, price_cents: 34900, price_type: 'from' },
+        ],
+      },
+      {
+        name: 'Add-Ons',
+        services: [
+          { name: 'Floor Plan (2D)',         description: 'Schematic floor plan with room dimensions.',     duration_min: 30, price_cents: 7900, price_type: 'fixed' },
+          { name: 'Virtual Staging',         description: 'Per photo. Empty rooms staged digitally.',       duration_min: 0,  price_cents: 4500, price_type: 'fixed' },
+          { name: 'Rush Delivery — 12hr',    description: 'Edited photos within 12hrs of shoot.',           duration_min: 0,  price_cents: 5000, price_type: 'fixed' },
+          { name: 'Property Website',        description: 'Single-property landing page with photos + map.', duration_min: 0, price_cents: 9900, price_type: 'fixed' },
+        ],
+      },
+    ],
+  },
+  {
     key: 'makeup',
     label: 'Makeup Artist',
     blurb: 'Bridal, event, and editorial makeup.',

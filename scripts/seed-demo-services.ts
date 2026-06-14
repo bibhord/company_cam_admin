@@ -9,9 +9,10 @@ const svc = createClient(
 );
 
 const DEMO_TEMPLATES: Record<string, string> = {
-  'demo-hairstylist': 'salon',
-  'demo-landscaper':  'landscaper',
-  'demo-plumber':     'plumber',
+  'demo-hairstylist':  'salon',
+  'demo-landscaper':   'landscaper',
+  'demo-plumber':      'plumber',
+  'demo-photographer': 'photographer',
 };
 
 async function main() {

@@ -94,10 +94,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- Allow externally-hosted photos (demo data) to live without an R2 key.
--- App code already handles null object_key + falls back to photos.url.
-ALTER TABLE photos ALTER COLUMN object_key DROP NOT NULL;
-
 -- 5. Photo annotations -------------------------------------------------
 CREATE TABLE IF NOT EXISTS photo_annotations (
   photo_id   uuid PRIMARY KEY REFERENCES photos(id) ON DELETE CASCADE,
