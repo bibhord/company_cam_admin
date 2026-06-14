@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { sendEmail, bookingRequestEmailToOrg } from '@/lib/email';
+import { sendEmail, bookingRequestEmailToOrg, bookingRequestReceivedEmail } from '@/lib/email';
 import { sendPush } from '@/lib/onesignal';
 
 export async function POST(req: Request) {
@@ -86,6 +86,18 @@ export async function POST(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Confirmation email to the customer
+  await sendEmail(
+    bookingRequestReceivedEmail({
+      customerName: customer_name,
+      customerEmail: customer_email,
+      orgName: org.name,
+      serviceName: service_name,
+      date: booking_date,
+      time: booking_time,
+    }),
+  ).catch(console.error);
 
   // Notify org admin
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.captureyourwork.com';

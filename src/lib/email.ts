@@ -51,6 +51,29 @@ export function bookingRequestEmailToOrg(params: {
   };
 }
 
+export function bookingRequestReceivedEmail(params: {
+  customerName: string;
+  customerEmail: string;
+  orgName: string;
+  serviceName: string;
+  date: string;
+  time: string;
+}): EmailPayload {
+  return {
+    to: params.customerEmail,
+    subject: `Booking request received — ${params.orgName}`,
+    html: `
+      <h2>Thanks for your booking request!</h2>
+      <p>Hi ${params.customerName},</p>
+      <p>We've sent your request to <strong>${params.orgName}</strong>. They'll review it shortly and email you back to confirm.</p>
+      <p><strong>Service:</strong> ${params.serviceName}</p>
+      <p><strong>Requested date/time:</strong> ${params.date} at ${params.time}</p>
+      <hr/>
+      <p style="font-size: 12px; color: #64748b;">If you have any questions, reply to this email and ${params.orgName} will get back to you.</p>
+    `,
+  };
+}
+
 export function bookingConfirmationEmail(params: {
   customerName: string;
   customerEmail: string;

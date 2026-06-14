@@ -9,6 +9,19 @@ export async function GET(req: Request) {
 
   if (!org_id || !date) return NextResponse.json({ error: 'org_id and date required' }, { status: 400 });
 
+  // Reject dates outside the booking window.
+  const LEAD_TIME_MIN = 60; // earliest booking is now + 1hr
+  const MAX_ADVANCE_DAYS = 60; // latest booking is today + 60 days
+
+  const requestedDate = new Date(date + 'T12:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + MAX_ADVANCE_DAYS);
+  if (requestedDate < today || requestedDate > maxDate) {
+    return NextResponse.json({ slots: [] });
+  }
+
   const svc = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -61,8 +74,17 @@ export async function GET(req: Request) {
     end: timeToMins(b.booking_time.slice(0, 5)) + b.duration_min,
   }));
 
+  // For today's date, also enforce lead time: drop any slot earlier than now + LEAD_TIME_MIN.
+  const now = new Date();
+  const isToday =
+    requestedDate.getFullYear() === now.getFullYear() &&
+    requestedDate.getMonth() === now.getMonth() &&
+    requestedDate.getDate() === now.getDate();
+  const minSlotMins = isToday ? now.getHours() * 60 + now.getMinutes() + LEAD_TIME_MIN : -1;
+
   const available = allSlots.filter((slot) => {
     const slotStart = timeToMins(slot);
+    if (slotStart < minSlotMins) return false;
     const slotEnd = slotStart + duration_min;
     return !bookedRanges.some((r) => slotStart < r.end && slotEnd > r.start);
   });
