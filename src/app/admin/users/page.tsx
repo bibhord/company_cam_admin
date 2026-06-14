@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 
 import type { ProfileRow, UserMeta } from '../types';
 import { InviteUsersWizard } from './invite-users-wizard';
+import { UserActions } from './user-actions';
 
 interface ProfileRecord {
   org_id: string;
@@ -69,9 +70,22 @@ export default async function ManageUsersPage() {
   }
 
   const profileRows = (profiles ?? []) as ProfileRow[];
+  const currentUserId = user.id;
 
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  // Quick per-user content presence check (only need a yes/no for the Delete gate)
+  const hasContentByUser = new Map<string, boolean>();
+  if (profileRows.length > 0) {
+    const userIds = profileRows.map((r) => r.user_id);
+    const [{ data: photoUsers }, { data: projectUsers }] = await Promise.all([
+      supabase.from('photos').select('created_by').in('created_by', userIds),
+      supabase.from('projects').select('created_by').in('created_by', userIds),
+    ]);
+    for (const r of photoUsers ?? []) if (r.created_by) hasContentByUser.set(r.created_by, true);
+    for (const r of projectUsers ?? []) if (r.created_by) hasContentByUser.set(r.created_by, true);
+  }
 
   const userMeta = new Map<string, UserMeta>();
 
@@ -159,6 +173,9 @@ export default async function ManageUsersPage() {
                     <th scope="col" className="px-4 py-3 text-left font-medium text-gray-600">
                       Added
                     </th>
+                    <th scope="col" className="px-4 py-3 text-right font-medium text-gray-600">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -197,6 +214,15 @@ export default async function ManageUsersPage() {
                         </td>
                         <td className="px-4 py-3 text-gray-500">
                           {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <UserActions
+                            userId={row.user_id}
+                            isActive={row.is_active}
+                            isSelf={row.user_id === currentUserId}
+                            hasContent={hasContentByUser.has(row.user_id)}
+                            role={row.role}
+                          />
                         </td>
                       </tr>
                     );
