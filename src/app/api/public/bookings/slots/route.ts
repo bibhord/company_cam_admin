@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { fetchBusyIntervals } from '@/lib/google-calendar';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -73,6 +74,43 @@ export async function GET(req: Request) {
     start: timeToMins(b.booking_time.slice(0, 5)),
     end: timeToMins(b.booking_time.slice(0, 5)) + b.duration_min,
   }));
+
+  // Also fetch Google Calendar busy intervals if connected. We convert Google's
+  // ISO timestamps into minute-of-day in the same local frame the booking uses.
+  const { data: gcal } = await svc
+    .from('google_calendar_connections')
+    .select('refresh_token, calendar_id')
+    .eq('org_id', org_id)
+    .maybeSingle<{ refresh_token: string; calendar_id: string }>();
+
+  if (gcal?.refresh_token) {
+    // Build start-of-day / end-of-day in UTC (the booking_date string is in
+    // the org's local calendar day; we use noon as a DST-safe pivot then
+    // expand to 00:00–24:00 in that local day). For simplicity and parity
+    // with the rest of this endpoint we treat times as naive local.
+    const dayStart = new Date(`${date}T00:00:00.000Z`).toISOString();
+    const dayEnd = new Date(`${date}T23:59:59.999Z`).toISOString();
+    const busy = await fetchBusyIntervals(gcal.refresh_token, gcal.calendar_id ?? 'primary', dayStart, dayEnd);
+    for (const b of busy) {
+      const startMins = timeToLocalMins(b.start);
+      const endMins = timeToLocalMins(b.end);
+      if (Number.isFinite(startMins) && Number.isFinite(endMins) && endMins > startMins) {
+        bookedRanges.push({ start: startMins, end: endMins });
+      }
+    }
+
+    // bump last_used_at so we can spot stale connections later
+    await svc
+      .from('google_calendar_connections')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('org_id', org_id);
+  }
+
+  function timeToLocalMins(iso: string): number {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return Number.NaN;
+    return d.getUTCHours() * 60 + d.getUTCMinutes();
+  }
 
   // For today's date, also enforce lead time: drop any slot earlier than now + LEAD_TIME_MIN.
   const now = new Date();

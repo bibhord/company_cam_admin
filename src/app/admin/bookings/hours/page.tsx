@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { BusinessHoursForm } from './business-hours-form';
 import { CalendarFeed } from './calendar-feed';
+import { GoogleCalendarConnect } from './google-calendar-connect';
 import { buildIcalToken } from '@/lib/ical';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,12 @@ export default async function BusinessHoursPage() {
 
   const hours: HoursRow[] = (hoursData ?? []) as HoursRow[];
 
+  const { data: gcalConn } = await supabase
+    .from('google_calendar_connections')
+    .select('google_email, connected_at')
+    .eq('org_id', profile.org_id)
+    .maybeSingle<{ google_email: string; connected_at: string }>();
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
       <p className="text-xs uppercase tracking-wide text-slate-500">
@@ -54,6 +61,18 @@ export default async function BusinessHoursPage() {
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
         <BusinessHoursForm orgId={profile.org_id} initial={hours} canEdit={canEdit} />
+      </div>
+
+      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">Block out personal calendar events</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Connect your Google Calendar and we&apos;ll automatically hide booking times that overlap with your personal events (doctor appointments, kids&apos; activities, etc.). Read-only — we never write to your calendar.
+        </p>
+        <GoogleCalendarConnect
+          canEdit={canEdit}
+          connectedEmail={gcalConn?.google_email ?? null}
+          connectedAt={gcalConn?.connected_at ?? null}
+        />
       </div>
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
